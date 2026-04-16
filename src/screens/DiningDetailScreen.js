@@ -25,9 +25,15 @@ export default function DiningDetailScreen({ route, navigation }) {
 
   if (!hall) return null;
 
-  const items = getFilteredMenuItems(hallId).filter(
+  const allHallItems = getFilteredMenuItems(hallId);
+  const items = allHallItems.filter(
     (item) => period === 'All' || item.mealPeriod === period.toLowerCase()
   );
+
+  // True when the hall simply doesn't serve this meal (not a filter issue)
+  const mealNotServed =
+    period !== 'All' &&
+    !hall.currentMeals?.includes(period.toLowerCase());
 
   // Group items by station (category) for live scraped data
   const stationGroups = useMemo(() => {
@@ -105,9 +111,17 @@ export default function DiningDetailScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.menuContent} showsVerticalScrollIndicator={false}>
         {stationGroups.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>🥗</Text>
-            <Text style={styles.emptyText}>No items match your filters</Text>
-            <Text style={styles.emptySub}>Try adjusting your dietary filters</Text>
+            <Text style={styles.emptyEmoji}>{mealNotServed ? '🕐' : '🥗'}</Text>
+            <Text style={styles.emptyText}>
+              {mealNotServed
+                ? `${period} not served here`
+                : 'No items match your filters'}
+            </Text>
+            <Text style={styles.emptySub}>
+              {mealNotServed
+                ? 'Check the hours above for available meal periods'
+                : 'Try adjusting your dietary filters'}
+            </Text>
           </View>
         ) : (
           stationGroups.map(([station, stationItems]) => (
@@ -268,8 +282,18 @@ const styles = StyleSheet.create({
   capacityDetails:  { flexDirection: 'row', gap: SPACING.xl },
   capacityInfo:     { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
 
-  filterScroll: { backgroundColor: COLORS.surface, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
-  filterRow:    { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm },
+  filterScroll: {
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: 0.5,
+    borderBottomColor: COLORS.border,
+    height: 52,
+  },
+  filterRow: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
 
   periodTabs: {
     flexDirection: 'row', backgroundColor: COLORS.surface,

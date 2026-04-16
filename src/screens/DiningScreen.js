@@ -164,8 +164,13 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
 
-  filterScroll: { marginTop: SPACING.md },
-  filterRow: { paddingHorizontal: SPACING.lg, paddingRight: SPACING.xl },
+  filterScroll: { marginTop: SPACING.md, height: 52 },
+  filterRow: {
+    paddingHorizontal: SPACING.lg,
+    paddingRight: SPACING.xl,
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
 
   // OSU-style grouped card list
   hallList: {

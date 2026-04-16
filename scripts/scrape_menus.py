@@ -4,8 +4,8 @@ scripts/scrape_menus.py
 Scrapes live OSU dining menus from the Nutrislice API and writes two files
 into src/data/ that the Nutrigain app consumes directly:
 
-  src/data/menuData.js   — DINING_HALLS + MENU_ITEMS (replaces mock values)
-  src/data/menus.json    — raw structured JSON (for debugging / future use)
+  src/data/menuData.js   -- DINING_HALLS + MENU_ITEMS (replaces mock values)
+  src/data/menus.json    -- raw structured JSON (for debugging / future use)
 
 Usage (run from the project root):
 
@@ -43,19 +43,19 @@ DATA_DIR    = PROJECT_DIR / "src" / "data"
 # Nutrislice API config
 # ---------------------------------------------------------------------------
 
+# Date segment must be YYYY/MM/DD (slashes), not YYYY-MM-DD
 BASE_URL = (
     "https://osu.api.nutrislice.com/menu/api/weeks/school"
-    "/{location}/menu-type/{meal}/{date}/"
+    "/{location}/menu-type/{meal}/{year}/{month}/{day}/"
 )
 
-# OSU Traditions locations — maps Nutrislice slugs → app hall IDs + metadata
 LOCATIONS = {
     "traditions-at-kennedy": {
         "hall_id":       "kennedy",
         "display_name":  "Kennedy Commons",
         "location_desc": "North Campus",
         "distance":      "0.5 mi",
-        "hours":         "7:00 AM – 8:00 PM",
+        "hours":         "7:00 AM - 8:00 PM",
         "lat":           40.0074,
         "lng":           -83.0300,
         "meals": {
@@ -68,7 +68,7 @@ LOCATIONS = {
         "display_name":  "Scott House",
         "location_desc": "North Campus",
         "distance":      "0.6 mi",
-        "hours":         "7:30 AM – 9:00 PM",
+        "hours":         "7:30 AM - 9:00 PM",
         "lat":           40.0063,
         "lng":           -83.0283,
         "meals": {
@@ -82,7 +82,7 @@ LOCATIONS = {
         "display_name":  "Morrill Tower",
         "location_desc": "South Campus",
         "distance":      "0.4 mi",
-        "hours":         "6:30 AM – 11:00 PM",
+        "hours":         "6:30 AM - 11:00 PM",
         "lat":           40.0020,
         "lng":           -83.0200,
         "meals": {
@@ -93,26 +93,27 @@ LOCATIONS = {
 }
 
 MEAL_PERIOD_MAP = {
-    "Breakfast":     "breakfast",
-    "Lunch":         "lunch",
-    "Lunch/Dinner":  "lunch",
-    "Dinner":        "dinner",
+    "Breakfast":    "breakfast",
+    "Lunch":        "lunch",
+    "Lunch/Dinner": "lunch",
+    "Dinner":       "dinner",
 }
 
 HEADERS = {
     "Accept":     "application/json",
-    "User-Agent": "NutrigainScraper/1.0",
+    "User-Agent": "Mozilla/5.0",
 }
 
-REQUEST_DELAY = 0.5   # seconds between requests
-
+REQUEST_DELAY = 0.5
 
 # ---------------------------------------------------------------------------
 # API fetch
 # ---------------------------------------------------------------------------
 
 def fetch_menu(location_slug: str, meal_slug: str, target_date: str) -> dict | None:
-    url = BASE_URL.format(location=location_slug, meal=meal_slug, date=target_date)
+    """Fetch one week of data; return the day dict matching target_date or None."""
+    y, m, d = target_date.split("-")
+    url = BASE_URL.format(location=location_slug, meal=meal_slug, year=y, month=m, day=d)
     try:
         resp = requests.get(url, headers=HEADERS, timeout=15)
         resp.raise_for_status()
@@ -136,129 +137,131 @@ def fetch_menu(location_slug: str, meal_slug: str, target_date: str) -> dict | N
 
 
 # ---------------------------------------------------------------------------
-# Nutrition / allergen / tag extraction
+# Nutrition / allergen / tag extraction  (new API schema)
 # ---------------------------------------------------------------------------
 
-def _get(d: dict, *keys):
-    for k in keys:
-        v = d.get(k)
-        if v is not None:
-            return v
-    return None
-
-
 def extract_nutrition(food: dict) -> dict:
-    nf = food.get("nutritionFacts") or food.get("nutrition_facts") or {}
+    nf = food.get("rounded_nutrition_info") or {}
+    si = food.get("serving_size_info") or {}
+    amount = si.get("serving_size_amount", "")
+    unit   = si.get("serving_size_unit", "")
+    serving = f"{amount} {unit}".strip() if amount else None
     return {
-        "calories":        _get(nf, "calories"),
-        "serving_size":    _get(nf, "servingSize", "serving_size"),
-        "total_fat_g":     _get(nf, "totalFat", "total_fat"),
-        "saturated_fat_g": _get(nf, "saturatedFat", "saturated_fat"),
-        "trans_fat_g":     _get(nf, "transFat", "trans_fat"),
-        "cholesterol_mg":  _get(nf, "cholesterol"),
-        "sodium_mg":       _get(nf, "sodium"),
-        "total_carbs_g":   _get(nf, "totalCarbohydrates", "total_carbohydrates", "totalCarbs"),
-        "dietary_fiber_g": _get(nf, "dietaryFiber", "dietary_fiber"),
-        "total_sugars_g":  _get(nf, "totalSugars", "total_sugars", "sugars"),
-        "added_sugars_g":  _get(nf, "addedSugars", "added_sugars"),
-        "protein_g":       _get(nf, "protein"),
-        "vitamin_d_mcg":   _get(nf, "vitaminD", "vitamin_d"),
-        "calcium_mg":      _get(nf, "calcium"),
-        "iron_mg":         _get(nf, "iron"),
-        "potassium_mg":    _get(nf, "potassium"),
+        "calories":        nf.get("calories"),
+        "serving_size":    serving,
+        "total_fat_g":     nf.get("g_fat"),
+        "saturated_fat_g": nf.get("g_saturated_fat"),
+        "trans_fat_g":     nf.get("g_trans_fat"),
+        "cholesterol_mg":  nf.get("mg_cholesterol"),
+        "sodium_mg":       nf.get("mg_sodium"),
+        "total_carbs_g":   nf.get("g_carbs"),
+        "dietary_fiber_g": nf.get("g_fiber"),
+        "total_sugars_g":  nf.get("g_sugar"),
+        "added_sugars_g":  nf.get("g_added_sugar"),
+        "protein_g":       nf.get("g_protein"),
+        "vitamin_d_mcg":   nf.get("mcg_vitamin_d"),
+        "calcium_mg":      nf.get("mg_calcium"),
+        "iron_mg":         nf.get("mg_iron"),
+        "potassium_mg":    nf.get("mg_potassium"),
     }
 
 
+# Icons with behavior=1 are allergens; behavior=2 are dietary highlights
+_DIETARY_ICON_MAP = {
+    "default.gluten-free": "gluten-free",
+    "default.vegetarian":  "vegetarian",
+    "default.vegan":       "vegan",
+    "default.dairy-free":  "dairy-free",
+    "default.halal":       "halal",
+    "default.kosher":      "kosher",
+}
+
+def _food_icons(food: dict) -> list[dict]:
+    return (food.get("icons") or {}).get("food_icons") or []
+
 def extract_allergens(food: dict) -> list[str]:
     out = []
-    for a in food.get("allergens", []):
-        name = a.get("name") or a.get("allergen") or ""
-        if name:
-            out.append(name.lower())
+    for icon in _food_icons(food):
+        if icon.get("behavior") == 1 and icon.get("enabled"):
+            name = (icon.get("name") or "").strip().lower()
+            if name:
+                out.append(name)
     return sorted(out)
-
-
-# Nutrislice dietary label → Nutrigain dietary tag
-_LABEL_MAP = {
-    "vegan":       "vegan",
-    "vegetarian":  "vegetarian",
-    "gluten free": "gluten-free",
-    "gluten-free": "gluten-free",
-    "dairy free":  "dairy-free",
-    "dairy-free":  "dairy-free",
-    "nut free":    "nut-free",
-    "nut-free":    "nut-free",
-    "halal":       "halal",
-    "kosher":      "kosher",
-}
 
 def extract_dietary_tags(food: dict) -> list[str]:
     tags = set()
-    for t in food.get("dietaryInformation", food.get("labels", [])):
-        raw = (t.get("name") or t.get("label") or "").strip().lower()
-        mapped = _LABEL_MAP.get(raw)
-        if mapped:
-            tags.add(mapped)
-
-    # Infer high-protein: ≥ 25g protein
-    nf = food.get("nutritionFacts") or food.get("nutrition_facts") or {}
-    protein = _get(nf, "protein")
-    if protein and float(protein) >= 25:
+    for icon in _food_icons(food):
+        if icon.get("behavior") == 2 and icon.get("enabled"):
+            slug = icon.get("icon_slug", "")
+            mapped = _DIETARY_ICON_MAP.get(slug)
+            if mapped:
+                tags.add(mapped)
+    nf = food.get("rounded_nutrition_info") or {}
+    if (nf.get("g_protein") or 0) >= 25:
         tags.add("high-protein")
-
     return sorted(tags)
 
 
 # ---------------------------------------------------------------------------
-# Parse a day's API response into structured items
+# Parse a day's flat menu_items list into structured items
 # ---------------------------------------------------------------------------
 
 def parse_day_items(day_data: dict, hall_id: str, meal_period: str) -> list[dict]:
     """
-    Returns a flat list of menu item dicts shaped to match Nutrigain's
-    MENU_ITEMS schema in mockData.js.
+    The new Nutrislice API returns a flat menu_items list.  Station names
+    appear as inline header rows (is_station_header=True) followed by the
+    food rows that belong to that station.
     """
     items = []
-    item_counter = [0]
+    current_station = "General"
+    counter = [0]
 
-    for menu_type in day_data.get("menuTypes", []):
-        for station in menu_type.get("menuStations", []):
-            station_name = station.get("name", "").strip()
-            for entry in station.get("menuItems", []):
-                food = entry.get("food") or entry
-                name = (food.get("name") or "").strip()
-                if not name:
-                    continue
+    for entry in day_data.get("menu_items", []):
+        # Station header row
+        if entry.get("is_station_header"):
+            current_station = (entry.get("text") or "General").strip() or "General"
+            continue
 
-                item_counter[0] += 1
-                nf        = extract_nutrition(food)
-                tags      = extract_dietary_tags(food)
-                allergens = extract_allergens(food)
+        # Skip blank lines, section titles that are not station headers
+        food = entry.get("food")
+        if not food:
+            continue
 
-                def to_int(v):
-                    try:
-                        return int(round(float(v)))
-                    except (TypeError, ValueError):
-                        return 0
+        name = (food.get("name") or "").strip()
+        if not name:
+            continue
 
-                items.append({
-                    "_tmp_id":     f"{hall_id}_{meal_period}_{item_counter[0]}",
-                    "hallId":      hall_id,
-                    "name":        name,
-                    "category":    station_name or "General",
-                    "mealPeriod":  meal_period,
-                    "calories":    to_int(nf["calories"]),
-                    "protein":     to_int(nf["protein_g"]),
-                    "carbs":       to_int(nf["total_carbs_g"]),
-                    "fat":         to_int(nf["total_fat_g"]),
-                    "fiber":       to_int(nf["dietary_fiber_g"]),
-                    "sodium":      to_int(nf["sodium_mg"]),
-                    "allergens":   allergens,
-                    "dietary":     tags,
-                    "description": (food.get("description") or "").strip() or None,
-                    "available":   True,
-                    "_nutrition":  nf,
-                })
+        counter[0] += 1
+        nf        = extract_nutrition(food)
+        allergens = extract_allergens(food)
+        tags      = extract_dietary_tags(food)
+
+        def to_int(v):
+            try:
+                return int(round(float(v)))
+            except (TypeError, ValueError):
+                return 0
+
+        desc = (food.get("description") or "").strip() or None
+
+        items.append({
+            "_tmp_id":     f"{hall_id}_{meal_period}_{counter[0]}",
+            "hallId":      hall_id,
+            "name":        name,
+            "category":    current_station,
+            "mealPeriod":  meal_period,
+            "calories":    to_int(nf["calories"]),
+            "protein":     to_int(nf["protein_g"]),
+            "carbs":       to_int(nf["total_carbs_g"]),
+            "fat":         to_int(nf["total_fat_g"]),
+            "fiber":       to_int(nf["dietary_fiber_g"]),
+            "sodium":      to_int(nf["sodium_mg"]),
+            "allergens":   allergens,
+            "dietary":     tags,
+            "description": desc,
+            "available":   True,
+            "_nutrition":  nf,
+        })
 
     return items
 
@@ -281,9 +284,9 @@ def build_dining_halls(scraped_slugs: list[str]) -> list[dict]:
             "location":     cfg["location_desc"],
             "distance":     cfg["distance"],
             "hours":        cfg["hours"],
-            "status":       "green",     # placeholder — update from real-time source
-            "waitTime":     "< 5 min",   # placeholder
-            "capacity":     20,          # placeholder
+            "status":       "green",    # placeholder
+            "waitTime":     "< 5 min",  # placeholder
+            "capacity":     20,         # placeholder
             "lat":          cfg["lat"],
             "lng":          cfg["lng"],
             "image":        None,
@@ -297,10 +300,6 @@ def build_dining_halls(scraped_slugs: list[str]) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def scrape_date(target_date: str) -> tuple[list[dict], list[dict]]:
-    """
-    Scrape all locations for one date.
-    Returns (dining_halls, menu_items) ready to write into menuData.js.
-    """
     print(f"\nScraping {target_date}...")
     all_items: list[dict] = []
     successful_slugs: list[str] = []
@@ -312,7 +311,7 @@ def scrape_date(target_date: str) -> tuple[list[dict], list[dict]]:
 
         for meal_slug, meal_label in loc_cfg["meals"].items():
             meal_period = MEAL_PERIOD_MAP.get(meal_label, "lunch")
-            print(f"    → {meal_label}...", end=" ", flush=True)
+            print(f"    -> {meal_label}...", end=" ", flush=True)
             time.sleep(REQUEST_DELAY)
 
             day_data = fetch_menu(loc_slug, meal_slug, target_date)
@@ -332,7 +331,6 @@ def scrape_date(target_date: str) -> tuple[list[dict], list[dict]]:
         if got_data:
             successful_slugs.append(loc_slug)
 
-    # Assign stable sequential IDs
     for i, item in enumerate(all_items, 1):
         item["id"] = f"m{i:04d}"
         del item["_tmp_id"]
@@ -346,18 +344,12 @@ def scrape_date(target_date: str) -> tuple[list[dict], list[dict]]:
 # ---------------------------------------------------------------------------
 
 def write_js(dining_halls: list[dict], menu_items: list[dict], target_date: str):
-    """Write src/data/menuData.js — a drop-in for the menu portions of mockData.js."""
-
     halls_json = json.dumps(dining_halls, indent=2, ensure_ascii=False)
     items_json = json.dumps(menu_items,   indent=2, ensure_ascii=False)
-
     js = f"""\
 // src/data/menuData.js
-// Auto-generated by scripts/scrape_menus.py — do not edit by hand.
+// Auto-generated by scripts/scrape_menus.py -- do not edit by hand.
 // Last scraped: {target_date}
-//
-// Drop-in replacement for the DINING_HALLS and MENU_ITEMS exports in
-// mockData.js.  Set USE_LIVE_DATA = true in AppContext.js to activate.
 
 export const SCRAPED_DATE = '{target_date}';
 
@@ -365,14 +357,12 @@ export const DINING_HALLS = {halls_json};
 
 export const MENU_ITEMS = {items_json};
 """
-
     out_path = DATA_DIR / "menuData.js"
     out_path.write_text(js, encoding="utf-8")
-    print(f"\n✓ Wrote {out_path}")
+    print(f"\nWrote {out_path}")
 
 
 def write_json(dining_halls: list[dict], menu_items: list[dict], target_date: str):
-    """Write src/data/menus.json — raw structured data for debugging."""
     payload = {
         "source":       "OSU Nutrislice",
         "date":         target_date,
@@ -381,11 +371,8 @@ def write_json(dining_halls: list[dict], menu_items: list[dict], target_date: st
         "menu_items":   menu_items,
     }
     out_path = DATA_DIR / "menus.json"
-    out_path.write_text(
-        json.dumps(payload, indent=2, ensure_ascii=False),
-        encoding="utf-8",
-    )
-    print(f"✓ Wrote {out_path}")
+    out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Wrote {out_path}")
 
 
 # ---------------------------------------------------------------------------
@@ -394,7 +381,7 @@ def write_json(dining_halls: list[dict], menu_items: list[dict], target_date: st
 
 def parse_args():
     p = argparse.ArgumentParser(
-        description="Scrape OSU Nutrislice → Nutrigain src/data/menuData.js"
+        description="Scrape OSU Nutrislice -> Nutrigain src/data/menuData.js"
     )
     g = p.add_mutually_exclusive_group()
     g.add_argument("--date",  metavar="YYYY-MM-DD", help="Single date (default: today)")
@@ -428,10 +415,10 @@ def main():
     else:
         target = args.date or date.today().isoformat()
         halls, items = scrape_date(target)
-        write_js(halls,  items, target)
+        write_js(halls, items, target)
         write_json(halls, items, target)
 
-    print("\nDone. To use live data in your app, set USE_LIVE_DATA = true in AppContext.js.")
+    print("\nDone. To use live data in the app, set USE_LIVE_DATA = true in AppContext.js.")
 
 
 if __name__ == "__main__":
