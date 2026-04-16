@@ -1,18 +1,45 @@
 import React, { createContext, useContext, useState } from 'react';
-import { USER_PROFILE, LOGGED_MEALS, MENU_ITEMS, DINING_HALLS } from '../data/mockData';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Set to true once you've run `python scripts/scrape_menus.py` at least once
+// and src/data/menuData.js exists.
+// ─────────────────────────────────────────────────────────────────────────────
+const USE_LIVE_DATA = true;
+
+// Mock data — always available as fallback
+import {
+  USER_PROFILE,
+  LOGGED_MEALS,
+  MENU_ITEMS     as MOCK_MENU_ITEMS,
+  DINING_HALLS   as MOCK_DINING_HALLS,
+} from '../data/mockData';
+
+// Live data — only imported when the flag is on and the file exists.
+// Keep USE_LIVE_DATA = false until scrape_menus.py has been run.
+let LIVE_MENU_ITEMS   = null;
+let LIVE_DINING_HALLS = null;
+if (USE_LIVE_DATA) {
+  const live = require('../data/menuData');
+  LIVE_MENU_ITEMS   = live.MENU_ITEMS;
+  LIVE_DINING_HALLS = live.DINING_HALLS;
+}
+
+const MENU_ITEMS   = USE_LIVE_DATA ? LIVE_MENU_ITEMS   : MOCK_MENU_ITEMS;
+const DINING_HALLS = USE_LIVE_DATA ? LIVE_DINING_HALLS : MOCK_DINING_HALLS;
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const AppContext = createContext();
 
 export function AppProvider({ children }) {
-  const [user, setUser] = useState(USER_PROFILE);
-  const [loggedMeals, setLoggedMeals] = useState(LOGGED_MEALS);
-  const [diningHalls, setDiningHalls] = useState(DINING_HALLS);
+  const [user, setUser]                 = useState(USER_PROFILE);
+  const [loggedMeals, setLoggedMeals]   = useState(LOGGED_MEALS);
+  const [diningHalls, setDiningHalls]   = useState(DINING_HALLS);
   const [activeFilters, setActiveFilters] = useState([]);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   const logMeal = (menuItem, hallName) => {
-    const today = new Date().toISOString().split('T')[0];
-    const hour = new Date().getHours();
+    const hour       = new Date().getHours();
     const mealPeriod = hour < 10 ? 'breakfast' : hour < 15 ? 'lunch' : 'dinner';
 
     const existingLog = loggedMeals.find(
@@ -25,7 +52,15 @@ export function AppProvider({ children }) {
           l.id === existingLog.id
             ? {
                 ...l,
-                items: [...l.items, { menuItemId: menuItem.id, name: menuItem.name, calories: menuItem.calories, hallName }],
+                items: [
+                  ...l.items,
+                  {
+                    menuItemId: menuItem.id,
+                    name:       menuItem.name,
+                    calories:   menuItem.calories,
+                    hallName,
+                  },
+                ],
                 totalCalories: l.totalCalories + menuItem.calories,
               }
             : l
@@ -35,10 +70,17 @@ export function AppProvider({ children }) {
       setLoggedMeals((prev) => [
         ...prev,
         {
-          id: `log${Date.now()}`,
-          date: 'today',
+          id:           `log${Date.now()}`,
+          date:         'today',
           mealPeriod,
-          items: [{ menuItemId: menuItem.id, name: menuItem.name, calories: menuItem.calories, hallName }],
+          items: [
+            {
+              menuItemId: menuItem.id,
+              name:       menuItem.name,
+              calories:   menuItem.calories,
+              hallName,
+            },
+          ],
           totalCalories: menuItem.calories,
         },
       ]);
@@ -47,9 +89,9 @@ export function AppProvider({ children }) {
     setUser((prev) => ({
       ...prev,
       currentCalories: prev.currentCalories + menuItem.calories,
-      currentProtein: prev.currentProtein + menuItem.protein,
-      currentCarbs: prev.currentCarbs + menuItem.carbs,
-      currentFat: prev.currentFat + menuItem.fat,
+      currentProtein:  prev.currentProtein  + (menuItem.protein || 0),
+      currentCarbs:    prev.currentCarbs    + (menuItem.carbs   || 0),
+      currentFat:      prev.currentFat      + (menuItem.fat     || 0),
     }));
   };
 
@@ -63,7 +105,9 @@ export function AppProvider({ children }) {
 
   const toggleFilter = (filter) => {
     setActiveFilters((prev) =>
-      prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
+      prev.includes(filter)
+        ? prev.filter((f) => f !== filter)
+        : [...prev, filter]
     );
   };
 
@@ -80,6 +124,7 @@ export function AppProvider({ children }) {
         getFilteredMenuItems,
         onboardingComplete,
         setOnboardingComplete,
+        usingLiveData: USE_LIVE_DATA,
       }}
     >
       {children}

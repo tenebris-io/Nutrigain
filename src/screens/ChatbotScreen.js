@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ActivityIndicator,
@@ -9,28 +9,82 @@ import { useApp } from '../context/AppContext';
 
 const ANTHROPIC_API_KEY = 'YOUR_API_KEY_HERE';
 
-const SYSTEM_PROMPT = `You are Nutrigain's AI dining assistant for Ohio State University students. You help students find meals, understand nutrition, and navigate campus dining.
+// ---------------------------------------------------------------------------
+// Build a system prompt from whatever menu data is currently loaded
+// ---------------------------------------------------------------------------
 
-You have access to the following OSU dining halls:
-- Baker Hall (South Campus, 0.3 mi) — Status: GREEN (low wait < 5 min)
-- Scott House (North Campus, 0.6 mi) — Status: YELLOW (busy, 10-15 min wait)
-- Morrill Tower (South Campus, 0.4 mi) — Status: RED (crowded, 20+ min)
-- Traditions (West Campus, 0.9 mi) — Status: GREEN (low wait < 5 min)
+function buildSystemPrompt(user, diningHalls, getFilteredMenuItems) {
+  const STATUS_LABEL = {
+    green:  'LOW WAIT (<5 min)',
+    yellow: 'BUSY (10–15 min)',
+    red:    'CROWDED (20+ min)',
+  };
 
-Available menu items today include options like Grilled Chicken Bowl (420 cal, 38g protein), Vegan Lentil Soup (210 cal, vegan/GF), Classic Caesar Salad (320 cal, vegetarian), Blueberry Acai Bowl (380 cal, vegan/GF), Scrambled Eggs & Toast (350 cal), Turkey Avocado Wrap (510 cal), Pasta Marinara (480 cal, vegetarian), Tofu Stir Fry (340 cal, vegan), Salmon with Quinoa (520 cal, GF), Veggie Burger (440 cal, vegan), Beef Taco Bowl (580 cal), GF Protein Pancakes (310 cal, GF), Greek Yogurt Parfait (260 cal, vegetarian/GF).
+  const hallSummaries = diningHalls.map((h) => {
+    const items    = getFilteredMenuItems(h.id);
+    const byPeriod = {};
+    items.forEach((item) => {
+      const p = item.mealPeriod;
+      if (!byPeriod[p]) byPeriod[p] = [];
+      byPeriod[p].push(
+        `${item.name} (${item.calories} cal` +
+        (item.protein ? `, ${item.protein}g protein` : '') +
+        (item.dietary?.length ? `, ${item.dietary.join('/')}` : '') +
+        ')'
+      );
+    });
 
-Keep responses concise (2-3 sentences max), friendly, and actionable. Format nutrition data clearly when asked. Use emojis sparingly but effectively. If asked about crowding, always lead with the hall status. If asked about dietary restrictions, always call out allergens.`;
+    const menuLines = Object.entries(byPeriod)
+      .map(([period, names]) => `    ${period}: ${names.slice(0, 8).join(' | ')}`)
+      .join('\n');
+
+    return (
+      `• ${h.name} (${h.location}, ${h.distance}) — ${STATUS_LABEL[h.status] || 'UNKNOWN'}\n` +
+      `  Hours: ${h.hours}\n` +
+      (menuLines ? `  Menu today:\n${menuLines}` : '  No menu data loaded yet.')
+    );
+  }).join('\n\n');
+
+  const userRestrictions = user.dietaryRestrictions?.length
+    ? `The student's dietary restrictions are: ${user.dietaryRestrictions.join(', ')}.`
+    : 'The student has no dietary restrictions on file.';
+
+  return `You are Nutrigain's AI dining assistant for Ohio State University students. \
+You help students find meals, understand nutrition, and navigate campus dining.
+
+${userRestrictions} When recommending meals, automatically respect these restrictions.
+
+CURRENT DINING HALL STATUS AND MENUS:
+${hallSummaries}
+
+Guidelines:
+- Keep responses concise (2–3 sentences), friendly, and actionable.
+- Lead with crowding status when asked about wait times.
+- Always flag allergens when relevant.
+- Format calorie/macro data clearly.
+- Use emojis sparingly but effectively.
+- If asked something you don't have data for, say so honestly.`;
+}
+
+// ---------------------------------------------------------------------------
 
 export default function ChatbotScreen() {
-  const { user } = useApp();
+  const { user, diningHalls, getFilteredMenuItems } = useApp();
+
+  const systemPrompt = useMemo(
+    () => buildSystemPrompt(user, diningHalls, getFilteredMenuItems),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [diningHalls, user.dietaryRestrictions]
+  );
+
   const [messages, setMessages] = useState([
     {
-      id: '0',
+      id:   '0',
       role: 'assistant',
       text: `Hey ${user.name}! I'm your campus dining assistant. Ask me about menu options, nutrition info, wait times, or anything dining-related.`,
     },
   ]);
-  const [input, setInput] = useState('');
+  const [input,   setInput]   = useState('');
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
 
@@ -55,25 +109,33 @@ export default function ChatbotScreen() {
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
+          'Content-Type':      'application/json',
+          'x-api-key':         ANTHROPIC_API_KEY,
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
-          model: 'claude-haiku-4-5-20251001',
+          model:      'claude-haiku-4-5-20251001',
           max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: [...history, { role: 'user', content: userText }],
+          system:     systemPrompt,
+          messages:   [...history, { role: 'user', content: userText }],
         }),
       });
 
-      const data = await response.json();
-      const replyText = data.content?.[0]?.text || "I'm having trouble connecting right now. Try again in a moment!";
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', text: replyText }]);
-    } catch (err) {
+      const data      = await response.json();
+      const replyText = data.content?.[0]?.text
+        || "I'm having trouble connecting right now. Try again in a moment!";
       setMessages((prev) => [
         ...prev,
-        { id: (Date.now() + 1).toString(), role: 'assistant', text: "Sorry, I can't connect right now. Check your internet and try again!" },
+        { id: (Date.now() + 1).toString(), role: 'assistant', text: replyText },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id:   (Date.now() + 1).toString(),
+          role: 'assistant',
+          text: "Sorry, I can't connect right now. Check your internet and try again!",
+        },
       ]);
     } finally {
       setLoading(false);
@@ -86,7 +148,7 @@ export default function ChatbotScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={88}
     >
-      {/* ── Header (OSU scarlet) ─────────────────────────────────── */}
+      {/* ── Header ───────────────────────────────────────────────── */}
       <View style={styles.header}>
         <View style={styles.headerInner}>
           <View style={styles.headerIcon}>
@@ -110,19 +172,28 @@ export default function ChatbotScreen() {
         showsVerticalScrollIndicator={false}
       >
         {messages.map((msg) => (
-          <View key={msg.id} style={[styles.bubble, msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot]}>
+          <View
+            key={msg.id}
+            style={[styles.bubble, msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot]}
+          >
             {msg.role === 'assistant' && (
               <View style={styles.botAvatar}>
                 <Text style={styles.botAvatarText}>N</Text>
               </View>
             )}
-            <View style={[styles.bubbleInner, msg.role === 'user' ? styles.bubbleInnerUser : styles.bubbleInnerBot]}>
+            <View
+              style={[
+                styles.bubbleInner,
+                msg.role === 'user' ? styles.bubbleInnerUser : styles.bubbleInnerBot,
+              ]}
+            >
               <Text style={[styles.bubbleText, msg.role === 'user' && styles.bubbleTextUser]}>
                 {msg.text}
               </Text>
             </View>
           </View>
         ))}
+
         {loading && (
           <View style={[styles.bubble, styles.bubbleBot]}>
             <View style={styles.botAvatar}>
@@ -137,7 +208,12 @@ export default function ChatbotScreen() {
 
       {/* ── Suggestions ──────────────────────────────────────────── */}
       {messages.length <= 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.suggestScroll} contentContainerStyle={styles.suggestRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.suggestScroll}
+          contentContainerStyle={styles.suggestRow}
+        >
           {CHATBOT_SUGGESTIONS.map((s) => (
             <TouchableOpacity key={s} onPress={() => sendMessage(s)} style={styles.suggestChip}>
               <Text style={styles.suggestText}>{s}</Text>
@@ -150,7 +226,7 @@ export default function ChatbotScreen() {
       <View style={styles.inputRow}>
         <TextInput
           style={styles.input}
-          placeholder="Ask about menus, nutrition, wait times..."
+          placeholder="Ask about menus, nutrition, wait times…"
           placeholderTextColor={COLORS.textSecondary}
           value={input}
           onChangeText={setInput}
@@ -173,95 +249,78 @@ export default function ChatbotScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-
   header: {
     backgroundColor: COLORS.primary,
     paddingTop: SPACING.xxxl,
     paddingBottom: SPACING.lg,
     paddingHorizontal: SPACING.lg,
   },
-  headerInner: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
-  headerIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.full,
+  headerInner:     { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  headerIcon:      {
+    width: 40, height: 40, borderRadius: RADIUS.full,
     backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.35)',
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)',
   },
-  headerIconText: { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.surface },
-  headerTitle: { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.surface },
+  headerIconText:  { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.surface },
+  headerTitle:     { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.surface },
   headerStatusRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: 2 },
-  onlineDot: { width: 6, height: 6, borderRadius: RADIUS.full, backgroundColor: '#4CD964' },
-  headerSub: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: 'rgba(255,255,255,0.75)' },
+  onlineDot:       { width: 6, height: 6, borderRadius: RADIUS.full, backgroundColor: '#4CD964' },
+  headerSub:       { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: 'rgba(255,255,255,0.75)' },
 
-  messages: { flex: 1 },
+  messages:        { flex: 1 },
   messagesContent: { padding: SPACING.lg, gap: SPACING.md },
-
-  bubble: { flexDirection: 'row', alignItems: 'flex-end', gap: SPACING.sm },
-  bubbleUser: { flexDirection: 'row-reverse' },
-  botAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: RADIUS.full,
+  bubble:          { flexDirection: 'row', alignItems: 'flex-end', gap: SPACING.sm },
+  bubbleUser:      { flexDirection: 'row-reverse' },
+  botAvatar:       {
+    width: 30, height: 30, borderRadius: RADIUS.full,
     backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
-    flexShrink: 0,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 2, flexShrink: 0,
   },
-  botAvatarText: { fontFamily: FONTS.bold, fontSize: SIZES.sm, color: COLORS.surface },
-  bubbleInner: { maxWidth: '78%', borderRadius: RADIUS.md, padding: SPACING.md },
-  bubbleInnerBot: { backgroundColor: COLORS.surface, ...SHADOWS.subtle },
+  botAvatarText:   { fontFamily: FONTS.bold, fontSize: SIZES.sm, color: COLORS.surface },
+  bubbleInner:     { maxWidth: '78%', borderRadius: RADIUS.md, padding: SPACING.md },
+  bubbleInnerBot:  { backgroundColor: COLORS.surface, ...SHADOWS.subtle },
   bubbleInnerUser: { backgroundColor: COLORS.primary },
-  bubbleText: { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textPrimary, lineHeight: 21 },
-  bubbleTextUser: { color: COLORS.surface },
+  bubbleText:      { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textPrimary, lineHeight: 21 },
+  bubbleTextUser:  { color: COLORS.surface },
 
-  suggestScroll: { maxHeight: 48, borderTopWidth: 0.5, borderTopColor: COLORS.border, backgroundColor: COLORS.surface },
-  suggestRow: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, gap: SPACING.sm, alignItems: 'center' },
-  suggestChip: {
+  suggestScroll:   {
+    maxHeight: 48,
+    borderTopWidth: 0.5, borderTopColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+  suggestRow:      {
+    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm,
+    gap: SPACING.sm, alignItems: 'center',
+  },
+  suggestChip:     {
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.full,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs,
+    borderWidth: 1, borderColor: COLORS.border,
   },
-  suggestText: { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.primary },
+  suggestText:     { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.primary },
 
   inputRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: SPACING.sm,
+    flexDirection: 'row', alignItems: 'flex-end', gap: SPACING.sm,
     padding: SPACING.md,
     backgroundColor: COLORS.surface,
-    borderTopWidth: 0.5,
-    borderTopColor: COLORS.border,
+    borderTopWidth: 0.5, borderTopColor: COLORS.border,
   },
   input: {
-    flex: 1,
-    minHeight: 42,
-    maxHeight: 120,
+    flex: 1, minHeight: 42, maxHeight: 120,
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    fontFamily: FONTS.regular,
-    fontSize: SIZES.sm,
-    color: COLORS.textPrimary,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+    borderWidth: 1, borderColor: COLORS.border,
+    fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textPrimary,
   },
-  sendBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: RADIUS.full,
+  sendBtn:         {
+    width: 42, height: 42, borderRadius: RADIUS.full,
     backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
   sendBtnDisabled: { backgroundColor: COLORS.border },
-  sendIcon: { fontFamily: FONTS.bold, fontSize: SIZES.lg, color: COLORS.surface },
+  sendIcon:        { fontFamily: FONTS.bold, fontSize: SIZES.lg, color: COLORS.surface },
 });
