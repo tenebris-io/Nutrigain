@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, TextInput, Animated,
 } from 'react-native';
 import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { Card, Button, Badge, Divider } from '../components/ui';
@@ -9,7 +9,7 @@ import { useApp } from '../context/AppContext';
 const DIETARY_OPTIONS = ['vegan', 'gluten-free', 'vegetarian', 'dairy-free', 'nut-free', 'high-protein'];
 
 export default function ProfileScreen({ navigation }) {
-  const { user, setUser } = useApp();
+  const { user, setUser, apiKey, setApiKey } = useApp();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     name: user.name,
@@ -21,6 +21,16 @@ export default function ProfileScreen({ navigation }) {
   const [restrictions, setRestrictions] = useState([...user.dietaryRestrictions]);
   const [notifications, setNotifications] = useState(true);
   const [smartAlerts, setSmartAlerts] = useState(true);
+  const [apiKeyInput, setApiKeyInput] = useState(apiKey);
+  const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => { setApiKeyInput(apiKey); }, [apiKey]);
+
+  const showToast = () => {
+    toastOpacity.setValue(1);
+    Animated.timing(toastOpacity, { toValue: 0, duration: 500, delay: 1500, useNativeDriver: true }).start();
+  };
 
   const toggleRestriction = (r) =>
     setRestrictions((prev) => prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]);
@@ -36,11 +46,16 @@ export default function ProfileScreen({ navigation }) {
       dietaryRestrictions: restrictions,
     }));
     setEditing(false);
+    showToast();
   };
 
   const calPct = Math.round((user.currentCalories / user.calorieGoal) * 100);
 
   return (
+    <View style={{ flex: 1 }}>
+    <Animated.View style={[styles.toast, { opacity: toastOpacity }]} pointerEvents="none">
+      <Text style={styles.toastText}>Saved!</Text>
+    </Animated.View>
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
       {/* ── Hero ─────────────────────────────────────────────────── */}
@@ -212,6 +227,40 @@ export default function ProfileScreen({ navigation }) {
         </View>
       </View>
 
+      {/* ── AI Settings ──────────────────────────────────────────── */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>AI ASSISTANT</Text>
+        <Text style={styles.sectionSub}>Your API key is stored locally on this device and never shared.</Text>
+        <View style={styles.card}>
+          <Text style={styles.formLabel}>Claude API Key</Text>
+          <View style={styles.apiKeyRow}>
+            <TextInput
+              style={[styles.formInput, styles.apiKeyInput]}
+              value={apiKeyInput}
+              onChangeText={setApiKeyInput}
+              placeholder="sk-ant-..."
+              placeholderTextColor={COLORS.textSecondary}
+              secureTextEntry={!apiKeyVisible}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity onPress={() => setApiKeyVisible((v) => !v)} style={styles.eyeBtn}>
+              <Text style={styles.eyeText}>{apiKeyVisible ? '🙈' : '👁'}</Text>
+            </TouchableOpacity>
+          </View>
+          <Button
+            label="Save API Key"
+            onPress={() => { setApiKey(apiKeyInput); showToast(); }}
+            style={{ marginTop: SPACING.md }}
+          />
+          {apiKey ? (
+            <Text style={styles.apiKeyStatus}>✓ API key configured — chatbot is active</Text>
+          ) : (
+            <Text style={styles.apiKeyMissing}>No key saved. Get one at console.anthropic.com</Text>
+          )}
+        </View>
+      </View>
+
       {/* ── About ────────────────────────────────────────────────── */}
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>ABOUT</Text>
@@ -226,6 +275,7 @@ export default function ProfileScreen({ navigation }) {
 
       <View style={{ height: SPACING.xxxl }} />
     </ScrollView>
+    </View>
   );
 }
 
@@ -343,6 +393,46 @@ const styles = StyleSheet.create({
   settingInfo: { flex: 1 },
   settingLabel: { fontFamily: FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.textPrimary },
   settingDesc: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+
+  // Toast
+  toast: {
+    position: 'absolute',
+    top: SPACING.xxxl + 8,
+    alignSelf: 'center',
+    zIndex: 999,
+    backgroundColor: COLORS.success,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.sm,
+  },
+  toastText: { fontFamily: FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.surface },
+
+  // API key
+  apiKeyRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  apiKeyInput: { flex: 1 },
+  eyeBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  eyeText: { fontSize: 16 },
+  apiKeyStatus: {
+    fontFamily: FONTS.medium,
+    fontSize: SIZES.xs,
+    color: COLORS.success,
+    marginTop: SPACING.sm,
+  },
+  apiKeyMissing: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.xs,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.sm,
+  },
 
   // About
   aboutCard: { alignItems: 'center', gap: 4 },

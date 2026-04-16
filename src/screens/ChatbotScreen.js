@@ -7,8 +7,6 @@ import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { CHATBOT_SUGGESTIONS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 
-const ANTHROPIC_API_KEY = 'YOUR_API_KEY_HERE';
-
 const SYSTEM_PROMPT = `You are Nutrigain's AI dining assistant for Ohio State University students. You help students find meals, understand nutrition, and navigate campus dining.
 
 You have access to the following OSU dining halls:
@@ -21,8 +19,8 @@ Available menu items today include options like Grilled Chicken Bowl (420 cal, 3
 
 Keep responses concise (2-3 sentences max), friendly, and actionable. Format nutrition data clearly when asked. Use emojis sparingly but effectively. If asked about crowding, always lead with the hall status. If asked about dietary restrictions, always call out allergens.`;
 
-export default function ChatbotScreen() {
-  const { user } = useApp();
+export default function ChatbotScreen({ navigation }) {
+  const { user, apiKey } = useApp();
   const [messages, setMessages] = useState([
     {
       id: '0',
@@ -52,11 +50,20 @@ export default function ChatbotScreen() {
         .filter((m) => m.id !== '0')
         .map((m) => ({ role: m.role, content: m.text }));
 
+      if (!apiKey) {
+        setMessages((prev) => [
+          ...prev,
+          { id: (Date.now() + 1).toString(), role: 'assistant', text: "No API key configured. Go to Profile → AI Assistant to add your Claude API key." },
+        ]);
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
+          'x-api-key': apiKey,
           'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify({
@@ -101,6 +108,20 @@ export default function ChatbotScreen() {
           </View>
         </View>
       </View>
+
+      {/* ── No API key banner ────────────────────────────────────── */}
+      {!apiKey && (
+        <View style={styles.noKeyBanner}>
+          <Text style={styles.noKeyTitle}>API Key Required</Text>
+          <Text style={styles.noKeySub}>Add your Claude API key in Profile to enable the chatbot.</Text>
+          <TouchableOpacity
+            style={styles.noKeyBtn}
+            onPress={() => navigation?.getParent()?.navigate('ProfileTab')}
+          >
+            <Text style={styles.noKeyBtnText}>Go to Profile Settings</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* ── Messages ─────────────────────────────────────────────── */}
       <ScrollView
@@ -264,4 +285,31 @@ const styles = StyleSheet.create({
   },
   sendBtnDisabled: { backgroundColor: COLORS.border },
   sendIcon: { fontFamily: FONTS.bold, fontSize: SIZES.lg, color: COLORS.surface },
+
+  noKeyBanner: {
+    margin: SPACING.lg,
+    padding: SPACING.xl,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.subtle,
+  },
+  noKeyTitle: { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary, marginBottom: SPACING.xs },
+  noKeySub: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.sm,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: SPACING.lg,
+  },
+  noKeyBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+  },
+  noKeyBtnText: { fontFamily: FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.surface },
 });

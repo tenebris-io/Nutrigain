@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -38,7 +38,15 @@ function HomeStack() {
 }
 
 export default function Navigation() {
-  const { onboardingComplete } = useApp();
+  const { onboardingComplete, loaded } = useApp();
+
+  if (!loaded) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   if (!onboardingComplete) {
     return (
@@ -134,5 +142,11 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     paddingTop: 2,
+  },
+  loading: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

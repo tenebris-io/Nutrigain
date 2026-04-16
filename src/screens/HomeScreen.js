@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { Card, Badge, MacroBar, SectionHeader, CrowdingDot } from '../components/ui';
 import { useApp } from '../context/AppContext';
@@ -11,16 +11,41 @@ const getGreeting = () => {
   return 'Good evening';
 };
 
-const ALERTS = [
-  { id: 1, text: 'You have 20 min before class — Baker has low wait & GF options!', type: 'info' },
-  { id: 2, text: 'Swipe balance running low: 8 swipes remain for the week.', type: 'warning' },
-];
+const buildAlerts = (user, diningHalls) => {
+  const alerts = [];
+  const remaining = user.calorieGoal - user.currentCalories;
+  const h = new Date().getHours();
+
+  if (user.swipesRemaining <= 5) {
+    alerts.push({ id: 'swipes', type: 'warning', text: `Swipe balance running low: ${user.swipesRemaining} swipes remain this week.` });
+  }
+  const greenHalls = diningHalls.filter((hall) => hall.status === 'green');
+  if (greenHalls.length > 0) {
+    alerts.push({ id: 'green', type: 'info', text: `${greenHalls[0].name} has low wait time right now — good time to grab a meal!` });
+  }
+  if (remaining > 400 && h >= 17) {
+    alerts.push({ id: 'calories-low', type: 'info', text: `You still have ${remaining} kcal left today. Don't skip dinner!` });
+  }
+  if (user.currentCalories > user.calorieGoal) {
+    alerts.push({ id: 'calories-over', type: 'warning', text: `You've exceeded your calorie goal by ${user.currentCalories - user.calorieGoal} kcal today.` });
+  }
+  if (user.streak >= 3) {
+    alerts.push({ id: 'streak', type: 'info', text: `${user.streak}-day logging streak! Keep it going.` });
+  }
+  if (alerts.length === 0) {
+    alerts.push({ id: 'default', type: 'info', text: "You're on track today. Browse dining halls to log your next meal." });
+  }
+  return alerts;
+};
 
 export default function HomeScreen({ navigation }) {
-  const { user, diningHalls, loggedMeals } = useApp();
+  const { user, diningHalls, loggedMeals, removeMeal } = useApp();
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
   const calPct = Math.min((user.currentCalories / user.calorieGoal) * 100, 100);
   const remaining = Math.max(user.calorieGoal - user.currentCalories, 0);
   const openHalls = diningHalls.slice(0, 3);
+  const alerts = buildAlerts(user, diningHalls);
+  const visibleAlerts = showAllAlerts ? alerts : alerts.slice(0, 2);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -83,8 +108,12 @@ export default function HomeScreen({ navigation }) {
       </View>
 
       {/* ── SMART ALERTS ────────────────────────────────────────── */}
-      <SectionHeader title="Smart Alerts" action="See all" onAction={() => {}} />
-      {ALERTS.map((alert) => (
+      <SectionHeader
+        title="Smart Alerts"
+        action={alerts.length > 2 ? (showAllAlerts ? 'Show less' : `See all (${alerts.length})`) : undefined}
+        onAction={alerts.length > 2 ? () => setShowAllAlerts((v) => !v) : undefined}
+      />
+      {visibleAlerts.map((alert) => (
         <View key={alert.id} style={[styles.alertCard, alert.type === 'warning' && styles.alertWarning]}>
           <View style={[styles.alertDot, { backgroundColor: alert.type === 'warning' ? COLORS.warning : COLORS.primary }]} />
           <Text style={styles.alertText}>{alert.text}</Text>
@@ -126,8 +155,17 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.logPeriod}>{log.mealPeriod.charAt(0).toUpperCase() + log.mealPeriod.slice(1)}</Text>
             {log.items.map((item, i) => (
               <View key={i} style={styles.logItem}>
-                <Text style={styles.logItemName}>{item.name}</Text>
-                <Text style={styles.logItemCal}>{item.calories} kcal</Text>
+                <Text style={styles.logItemName} numberOfLines={1}>{item.name}</Text>
+                <View style={styles.logItemRight}>
+                  <Text style={styles.logItemCal}>{item.calories} kcal</Text>
+                  <TouchableOpacity
+                    onPress={() => removeMeal(log.id, i)}
+                    style={styles.removeBtn}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={styles.removeBtnText}>×</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
             <View style={styles.logTotal}>
@@ -362,9 +400,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
     marginBottom: SPACING.sm,
   },
-  logItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  logItemName: { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textPrimary },
+  logItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 3 },
+  logItemName: { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textPrimary, flex: 1, marginRight: SPACING.sm },
+  logItemRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   logItemCal: { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
+  removeBtn: {
+    width: 20,
+    height: 20,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  removeBtnText: { fontFamily: FONTS.bold, fontSize: 14, color: COLORS.textSecondary, lineHeight: 18 },
   logTotal: { borderTopWidth: 0.5, borderTopColor: COLORS.border, marginTop: SPACING.sm, paddingTop: SPACING.sm },
   logTotalText: { fontFamily: FONTS.bold, fontSize: SIZES.sm, color: COLORS.textPrimary, textAlign: 'right' },
 });
