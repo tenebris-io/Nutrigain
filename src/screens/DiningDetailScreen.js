@@ -35,8 +35,8 @@ export default function DiningDetailScreen({ route, navigation }) {
     Alert.alert('✅ Logged!', `${item.name} added to today's meals.`, [{ text: 'OK' }]);
   };
 
-  const statusColor = { green: COLORS.green, yellow: COLORS.warning, red: COLORS.error }[hall.status];
-  const statusLabel = { green: 'Open · Low wait', yellow: 'Busy · 10–15 min', red: 'Crowded · 20+ min' }[hall.status];
+  const statusColor = { green: COLORS.green, yellow: COLORS.warning, red: COLORS.error }[hall.status] || COLORS.textSecondary;
+  const statusLabel = { green: 'Open · Low wait', yellow: 'Busy · 10–15 min', red: 'Crowded · 20+ min' }[hall.status] || 'Status unknown';
 
   return (
     <View style={styles.container}>

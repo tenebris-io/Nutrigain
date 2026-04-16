@@ -7,6 +7,8 @@ import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { CHATBOT_SUGGESTIONS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 
+const ANTHROPIC_API_KEY = 'YOUR_API_KEY_HERE';
+
 const SYSTEM_PROMPT = `You are Nutrigain's AI dining assistant for Ohio State University students. You help students find meals, understand nutrition, and navigate campus dining.
 
 You have access to the following OSU dining halls:
@@ -52,9 +54,13 @@ export default function ChatbotScreen() {
 
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01',
+        },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-haiku-4-5-20251001',
           max_tokens: 1000,
           system: SYSTEM_PROMPT,
           messages: [...history, { role: 'user', content: userText }],
