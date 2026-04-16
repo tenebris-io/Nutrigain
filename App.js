@@ -1,6 +1,7 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
   useFonts,
   SpaceGrotesk_400Regular,
@@ -29,10 +30,12 @@ export default function App() {
   }
 
   return (
-    <AppProvider>
-      <StatusBar style="dark" backgroundColor={COLORS.background} />
-      <Navigation />
-    </AppProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AppProvider>
+        <StatusBar style="dark" backgroundColor={COLORS.background} />
+        <Navigation />
+      </AppProvider>
+    </GestureHandlerRootView>
   );
 }
 
