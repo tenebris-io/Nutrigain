@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -37,14 +37,6 @@ function HomeStack() {
   );
 }
 
-function TabIcon({ name, focused, label }) {
-  return (
-    <View style={[tabStyles.iconWrap, focused && tabStyles.iconWrapActive]}>
-      <Ionicons name={name} size={22} color={focused ? COLORS.primary : COLORS.textSecondary} />
-    </View>
-  );
-}
-
 export default function Navigation() {
   const { onboardingComplete } = useApp();
 
@@ -63,10 +55,11 @@ export default function Navigation() {
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
-          tabBarStyle: tabStyles.tabBar,
-          tabBarLabelStyle: tabStyles.label,
+          tabBarStyle: styles.tabBar,
+          tabBarLabelStyle: styles.label,
           tabBarActiveTintColor: COLORS.primary,
-          tabBarInactiveTintColor: COLORS.textSecondary,
+          tabBarInactiveTintColor: '#8E8E93',
+          tabBarItemStyle: styles.tabItem,
         }}
       >
         <Tab.Screen
@@ -74,7 +67,9 @@ export default function Navigation() {
           component={HomeStack}
           options={{
             tabBarLabel: 'Home',
-            tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} />,
+            tabBarIcon: ({ focused, color }) => (
+              <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
+            ),
           }}
         />
         <Tab.Screen
@@ -82,7 +77,9 @@ export default function Navigation() {
           component={DiningStack}
           options={{
             tabBarLabel: 'Dining',
-            tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'restaurant' : 'restaurant-outline'} focused={focused} />,
+            tabBarIcon: ({ focused, color }) => (
+              <Ionicons name={focused ? 'restaurant' : 'restaurant-outline'} size={24} color={color} />
+            ),
           }}
         />
         <Tab.Screen
@@ -90,10 +87,8 @@ export default function Navigation() {
           component={ChatbotScreen}
           options={{
             tabBarLabel: 'AI Chat',
-            tabBarIcon: ({ focused }) => (
-              <View style={tabStyles.chatIconWrap}>
-                <Ionicons name="sparkles" size={22} color={COLORS.surface} />
-              </View>
+            tabBarIcon: ({ focused, color }) => (
+              <Ionicons name={focused ? 'sparkles' : 'sparkles-outline'} size={24} color={color} />
             ),
           }}
         />
@@ -102,7 +97,9 @@ export default function Navigation() {
           component={DashboardScreen}
           options={{
             tabBarLabel: 'Progress',
-            tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'bar-chart' : 'bar-chart-outline'} focused={focused} />,
+            tabBarIcon: ({ focused, color }) => (
+              <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={24} color={color} />
+            ),
           }}
         />
         <Tab.Screen
@@ -110,7 +107,9 @@ export default function Navigation() {
           component={ProfileScreen}
           options={{
             tabBarLabel: 'Profile',
-            tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} />,
+            tabBarIcon: ({ focused, color }) => (
+              <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
+            ),
           }}
         />
       </Tab.Navigator>
@@ -118,38 +117,22 @@ export default function Navigation() {
   );
 }
 
-const tabStyles = StyleSheet.create({
+const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: COLORS.surface,
     borderTopColor: COLORS.border,
-    borderTopWidth: 1,
-    height: 80,
-    paddingBottom: 16,
-    paddingTop: 8,
+    borderTopWidth: 0.5,
+    height: 82,
+    paddingBottom: 18,
+    paddingTop: 10,
     ...SHADOWS.subtle,
   },
   label: {
     fontFamily: FONTS.medium,
-    fontSize: 11,
+    fontSize: 10,
+    marginTop: 2,
   },
-  iconWrap: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: RADIUS.md,
-  },
-  iconWrapActive: {
-    backgroundColor: COLORS.primaryLight,
-  },
-  chatIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-    ...SHADOWS.medium,
+  tabItem: {
+    paddingTop: 2,
   },
 });

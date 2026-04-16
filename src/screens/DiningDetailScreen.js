@@ -35,7 +35,7 @@ export default function DiningDetailScreen({ route, navigation }) {
     Alert.alert('✅ Logged!', `${item.name} added to today's meals.`, [{ text: 'OK' }]);
   };
 
-  const statusColor = { green: COLORS.green, yellow: COLORS.yellow, red: COLORS.error }[hall.status];
+  const statusColor = { green: COLORS.green, yellow: COLORS.warning, red: COLORS.error }[hall.status];
   const statusLabel = { green: 'Open · Low wait', yellow: 'Busy · 10–15 min', red: 'Crowded · 20+ min' }[hall.status];
 
   return (
@@ -49,7 +49,7 @@ export default function DiningDetailScreen({ route, navigation }) {
           <Text style={styles.hallName}>{hall.name}</Text>
           <View style={styles.statusRow}>
             <CrowdingDot status={hall.status} />
-            <Text style={[styles.statusText, { color: statusColor }]}>{statusLabel}</Text>
+            <Text style={styles.statusText}>{statusLabel}</Text>
           </View>
         </View>
       </View>
@@ -199,16 +199,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    padding: SPACING.xl, paddingTop: SPACING.xl,
-    backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    paddingHorizontal: SPACING.lg, paddingTop: SPACING.xxxl, paddingBottom: SPACING.lg,
+    backgroundColor: COLORS.primary,
   },
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backIcon: { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.textPrimary },
+  backIcon: { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.surface },
   headerMeta: { flex: 1 },
-  hallName: { fontFamily: FONTS.bold, fontSize: SIZES.lg, color: COLORS.textPrimary, letterSpacing: -0.5 },
+  hallName: { fontFamily: FONTS.bold, fontSize: SIZES.lg, color: COLORS.surface, letterSpacing: -0.5 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: 2 },
-  statusText: { fontFamily: FONTS.semiBold, fontSize: SIZES.xs },
-  capacitySection: { backgroundColor: COLORS.surface, padding: SPACING.xl, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  statusText: { fontFamily: FONTS.semiBold, fontSize: SIZES.xs, color: 'rgba(255,255,255,0.85)' },
+  capacitySection: { backgroundColor: COLORS.surface, padding: SPACING.lg, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
   capacityRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.sm },
   capacityLabel: { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
   capacityPct: { fontFamily: FONTS.bold, fontSize: SIZES.sm },
@@ -216,11 +216,11 @@ const styles = StyleSheet.create({
   capacityFill: { height: '100%', borderRadius: RADIUS.full },
   capacityDetails: { flexDirection: 'row', gap: SPACING.xl },
   capacityInfo: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
-  filterScroll: { backgroundColor: COLORS.surface, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  filterRow: { paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md },
+  filterScroll: { backgroundColor: COLORS.surface, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
+  filterRow: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm },
   periodTabs: {
     flexDirection: 'row', backgroundColor: COLORS.surface,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    borderBottomWidth: 0.5, borderBottomColor: COLORS.border,
   },
   tab: { flex: 1, paddingVertical: SPACING.md, alignItems: 'center' },
   tabActive: { borderBottomWidth: 2, borderBottomColor: COLORS.primary },

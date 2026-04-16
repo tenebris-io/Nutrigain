@@ -10,7 +10,7 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.85}
+      activeOpacity={0.82}
       style={[
         styles.button,
         size === 'sm' && styles.buttonSm,
@@ -23,7 +23,12 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
       {loading ? (
         <ActivityIndicator color={isSecondary || isGhost ? COLORS.primary : COLORS.surface} size="small" />
       ) : (
-        <Text style={[styles.buttonLabel, isSecondary && styles.buttonLabelSecondary, isGhost && styles.buttonLabelGhost, size === 'sm' && styles.buttonLabelSm]}>
+        <Text style={[
+          styles.buttonLabel,
+          isSecondary && styles.buttonLabelSecondary,
+          isGhost && styles.buttonLabelGhost,
+          size === 'sm' && styles.buttonLabelSm,
+        ]}>
           {label}
         </Text>
       )}
@@ -47,7 +52,7 @@ export function Card({ children, style, onPress }) {
 export function Badge({ label, color = 'primary' }) {
   const bgMap = {
     primary: COLORS.primaryLight,
-    secondary: COLORS.secondaryLight,
+    secondary: COLORS.primaryLight,
     success: COLORS.successLight,
     warning: COLORS.warningLight,
     error: COLORS.errorLight,
@@ -57,7 +62,7 @@ export function Badge({ label, color = 'primary' }) {
   };
   const textMap = {
     primary: COLORS.primary,
-    secondary: COLORS.secondary,
+    secondary: COLORS.primary,
     success: COLORS.success,
     warning: COLORS.warning,
     error: COLORS.error,
@@ -88,11 +93,14 @@ export function MacroBar({ label, current, goal, color }) {
   );
 }
 
-// ── SectionHeader ─────────────────────────────────────────────────────
-export function SectionHeader({ title, action, onAction }) {
+// ── SectionHeader — OSU style: ALL CAPS gray label + optional red action ──
+export function SectionHeader({ title, subtitle, action, onAction }) {
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <View>
+        <Text style={styles.sectionTitle}>{title.toUpperCase()}</Text>
+        {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
+      </View>
       {action && (
         <TouchableOpacity onPress={onAction}>
           <Text style={styles.sectionAction}>{action}</Text>
@@ -128,10 +136,10 @@ export function Divider() {
 
 const styles = StyleSheet.create({
   button: {
-    height: 48,
+    height: 50,
     paddingHorizontal: SPACING.xl,
     backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -141,20 +149,20 @@ const styles = StyleSheet.create({
   },
   buttonSecondary: {
     backgroundColor: 'transparent',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: COLORS.primary,
   },
   buttonGhost: {
     backgroundColor: 'transparent',
   },
   buttonDisabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
   buttonLabel: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.md,
     color: COLORS.surface,
-    letterSpacing: -0.3,
+    letterSpacing: -0.2,
   },
   buttonLabelSm: {
     fontSize: SIZES.sm,
@@ -168,12 +176,12 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.md,
-    padding: SPACING.xl,
-    ...SHADOWS.medium,
+    padding: SPACING.lg,
+    ...SHADOWS.subtle,
   },
   badge: {
     paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
+    paddingVertical: 3,
     borderRadius: RADIUS.full,
     alignSelf: 'flex-start',
   },
@@ -201,7 +209,7 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   macroBarTrack: {
-    height: 8,
+    height: 7,
     backgroundColor: COLORS.border,
     borderRadius: RADIUS.full,
     overflow: 'hidden',
@@ -210,17 +218,26 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: RADIUS.full,
   },
+  // OSU-style section header: small uppercase gray label
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
+    alignItems: 'flex-end',
+    marginBottom: SPACING.sm,
+    marginTop: SPACING.xl,
+    paddingHorizontal: 0,
   },
   sectionTitle: {
-    fontFamily: FONTS.bold,
-    fontSize: SIZES.lg,
-    color: COLORS.textPrimary,
-    letterSpacing: -0.5,
+    fontFamily: FONTS.semiBold,
+    fontSize: SIZES.xs,
+    color: COLORS.sectionLabel,
+    letterSpacing: 0.6,
+  },
+  sectionSubtitle: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.xs,
+    color: COLORS.textSecondary,
+    marginTop: 1,
   },
   sectionAction: {
     fontFamily: FONTS.semiBold,
@@ -228,8 +245,8 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   dot: {
-    width: 10,
-    height: 10,
+    width: 9,
+    height: 9,
     borderRadius: RADIUS.full,
   },
   chip: {
@@ -237,7 +254,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.surface,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: COLORS.border,
     marginRight: SPACING.sm,
   },
