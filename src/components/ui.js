@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     marginRight: SPACING.sm,
+    alignSelf: 'center',
   },
   chipActive: {
     backgroundColor: COLORS.primary,

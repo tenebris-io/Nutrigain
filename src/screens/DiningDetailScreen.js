@@ -6,8 +6,6 @@ import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { Badge, Button, DietaryChip, MacroBar, CrowdingDot } from '../components/ui';
 import { useApp } from '../context/AppContext';
 
-const MEAL_PERIODS = ['All', 'Breakfast', 'Lunch', 'Dinner'];
-
 const DIETARY_COLORS = {
   vegan:          'success',
   'gluten-free':  'secondary',
@@ -20,22 +18,30 @@ export default function DiningDetailScreen({ route, navigation }) {
   const { hallId } = route.params;
   const { diningHalls, getFilteredMenuItems, activeFilters, toggleFilter, logMeal } = useApp();
   const hall = diningHalls.find((h) => h.id === hallId);
-  const [period, setPeriod] = useState('All');
-  const [selected, setSelected] = useState(null);
+
+  const [period, setPeriod]                   = useState('all');
+  const [selected, setSelected]               = useState(null);
+  const [collapsedStations, setCollapsedStations] = useState({});
 
   if (!hall) return null;
 
+  // Build meal period tabs from what this hall actually serves.
+  // If the hall doesn't have separate dinner items, label the lunch tab "Lunch/Dinner".
+  const mealTabs = useMemo(() => {
+    const served  = hall.currentMeals || [];
+    const hasDinner = served.includes('dinner');
+    const tabs = [{ label: 'All', value: 'all' }];
+    if (served.includes('breakfast')) tabs.push({ label: 'Breakfast',    value: 'breakfast' });
+    if (served.includes('lunch'))     tabs.push({ label: hasDinner ? 'Lunch' : 'Lunch/Dinner', value: 'lunch' });
+    if (hasDinner)                    tabs.push({ label: 'Dinner',       value: 'dinner' });
+    return tabs;
+  }, [hall.currentMeals]);
+
   const allHallItems = getFilteredMenuItems(hallId);
   const items = allHallItems.filter(
-    (item) => period === 'All' || item.mealPeriod === period.toLowerCase()
+    (item) => period === 'all' || item.mealPeriod === period
   );
 
-  // True when the hall simply doesn't serve this meal (not a filter issue)
-  const mealNotServed =
-    period !== 'All' &&
-    !hall.currentMeals?.includes(period.toLowerCase());
-
-  // Group items by station (category) for live scraped data
   const stationGroups = useMemo(() => {
     const groups = {};
     items.forEach((item) => {
@@ -45,6 +51,15 @@ export default function DiningDetailScreen({ route, navigation }) {
     });
     return Object.entries(groups);
   }, [items]);
+
+  const toggleStation = (name) => {
+    setCollapsedStations((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  const handlePeriodChange = (value) => {
+    setPeriod(value);
+    setCollapsedStations({});
+  };
 
   const handleLog = (item) => {
     logMeal(item, hall.name);
@@ -94,80 +109,80 @@ export default function DiningDetailScreen({ route, navigation }) {
         ))}
       </ScrollView>
 
-      {/* Meal period tabs */}
+      {/* Meal period tabs — dynamic per hall */}
       <View style={styles.periodTabs}>
-        {MEAL_PERIODS.map((p) => (
+        {mealTabs.map((t) => (
           <TouchableOpacity
-            key={p}
-            onPress={() => setPeriod(p)}
-            style={[styles.tab, period === p && styles.tabActive]}
+            key={t.value}
+            onPress={() => handlePeriodChange(t.value)}
+            style={[styles.tab, period === t.value && styles.tabActive]}
           >
-            <Text style={[styles.tabText, period === p && styles.tabTextActive]}>{p}</Text>
+            <Text style={[styles.tabText, period === t.value && styles.tabTextActive]}>{t.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {/* Menu items grouped by station */}
+      {/* Menu items grouped by collapsible station */}
       <ScrollView contentContainerStyle={styles.menuContent} showsVerticalScrollIndicator={false}>
         {stationGroups.length === 0 ? (
           <View style={styles.empty}>
-            <Text style={styles.emptyEmoji}>{mealNotServed ? '🕐' : '🥗'}</Text>
-            <Text style={styles.emptyText}>
-              {mealNotServed
-                ? `${period} not served here`
-                : 'No items match your filters'}
-            </Text>
-            <Text style={styles.emptySub}>
-              {mealNotServed
-                ? 'Check the hours above for available meal periods'
-                : 'Try adjusting your dietary filters'}
-            </Text>
+            <Text style={styles.emptyEmoji}>🥗</Text>
+            <Text style={styles.emptyText}>No items match your filters</Text>
+            <Text style={styles.emptySub}>Try adjusting your dietary filters</Text>
           </View>
         ) : (
-          stationGroups.map(([station, stationItems]) => (
-            <View key={station}>
-              <Text style={styles.stationHeader}>{station}</Text>
-              {stationItems.map((item) => (
+          stationGroups.map(([station, stationItems]) => {
+            const collapsed = !!collapsedStations[station];
+            return (
+              <View key={station}>
                 <TouchableOpacity
-                  key={item.id}
-                  style={styles.menuCard}
-                  onPress={() => setSelected(item)}
-                  activeOpacity={0.88}
+                  style={styles.stationHeaderRow}
+                  onPress={() => toggleStation(station)}
+                  activeOpacity={0.7}
                 >
-                  <View style={styles.menuTop}>
-                    <View style={styles.menuInfo}>
-                      <Text style={styles.menuName}>{item.name}</Text>
-                      {item.mealPeriod ? (
-                        <Text style={styles.menuCategory}>{item.mealPeriod}</Text>
+                  <Text style={styles.stationHeaderText}>{station.toUpperCase()}</Text>
+                  <Text style={styles.stationChevron}>{collapsed ? '+' : '−'}</Text>
+                </TouchableOpacity>
+
+                {!collapsed && stationItems.map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.menuCard}
+                    onPress={() => setSelected(item)}
+                    activeOpacity={0.88}
+                  >
+                    <View style={styles.menuTop}>
+                      <View style={styles.menuInfo}>
+                        <Text style={styles.menuName}>{item.name}</Text>
+                      </View>
+                      <View style={styles.menuCalorie}>
+                        <Text style={styles.menuCalNum}>{item.calories}</Text>
+                        <Text style={styles.menuCalLabel}>kcal</Text>
+                      </View>
+                    </View>
+                    {item.description ? (
+                      <Text style={styles.menuDesc} numberOfLines={2}>{item.description}</Text>
+                    ) : null}
+                    <View style={styles.menuMacros}>
+                      <Text style={styles.macroChip}>P: {item.protein}g</Text>
+                      <Text style={styles.macroChip}>C: {item.carbs}g</Text>
+                      <Text style={styles.macroChip}>F: {item.fat}g</Text>
+                      {item.sodium > 0 ? (
+                        <Text style={styles.macroChip}>Na: {item.sodium}mg</Text>
                       ) : null}
                     </View>
-                    <View style={styles.menuCalorie}>
-                      <Text style={styles.menuCalNum}>{item.calories}</Text>
-                      <Text style={styles.menuCalLabel}>kcal</Text>
-                    </View>
-                  </View>
-                  {item.description ? (
-                    <Text style={styles.menuDesc} numberOfLines={2}>{item.description}</Text>
-                  ) : null}
-                  <View style={styles.menuMacros}>
-                    <Text style={styles.macroChip}>P: {item.protein}g</Text>
-                    <Text style={styles.macroChip}>C: {item.carbs}g</Text>
-                    <Text style={styles.macroChip}>F: {item.fat}g</Text>
-                    {item.sodium > 0 ? (
-                      <Text style={styles.macroChip}>Na: {item.sodium}mg</Text>
-                    ) : null}
-                  </View>
-                  {item.dietary.length > 0 && (
-                    <View style={styles.dietaryRow}>
-                      {item.dietary.map((d) => (
-                        <Badge key={d} label={d} color={DIETARY_COLORS[d] || 'primary'} />
-                      ))}
-                    </View>
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          ))
+                    {item.dietary.length > 0 && (
+                      <View style={styles.dietaryRow}>
+                        {item.dietary.map((d) => (
+                          <Badge key={d} label={d} color={DIETARY_COLORS[d] || 'primary'} />
+                        ))}
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            );
+          })
         )}
         <View style={{ height: SPACING.xxxl }} />
       </ScrollView>
@@ -184,7 +199,6 @@ export default function DiningDetailScreen({ route, navigation }) {
                   <Text style={styles.modalDesc}>{selected.description}</Text>
                 ) : null}
 
-                {/* Primary macros */}
                 <View style={styles.modalCalRow}>
                   <View style={styles.modalCalBox}>
                     <Text style={styles.modalCalNum}>{selected.calories}</Text>
@@ -204,7 +218,6 @@ export default function DiningDetailScreen({ route, navigation }) {
                   </View>
                 </View>
 
-                {/* Secondary stats (sodium + fiber) */}
                 {(selected.sodium > 0 || selected.fiber > 0) && (
                   <View style={[styles.modalCalRow, styles.modalSecondaryRow]}>
                     {selected.sodium > 0 && (
@@ -286,37 +299,44 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.border,
-    height: 52,
   },
   filterRow: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
-    alignItems: 'center',
-    flexDirection: 'row',
   },
 
   periodTabs: {
     flexDirection: 'row', backgroundColor: COLORS.surface,
     borderBottomWidth: 0.5, borderBottomColor: COLORS.border,
   },
-  tab:         { flex: 1, paddingVertical: SPACING.md, alignItems: 'center' },
-  tabActive:   { borderBottomWidth: 2, borderBottomColor: COLORS.primary },
-  tabText:     { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
+  tab:           { flex: 1, paddingVertical: SPACING.md, alignItems: 'center' },
+  tabActive:     { borderBottomWidth: 2, borderBottomColor: COLORS.primary },
+  tabText:       { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
   tabTextActive: { fontFamily: FONTS.bold, color: COLORS.primary },
 
   menuContent: { padding: SPACING.xl },
 
-  stationHeader: {
+  stationHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderBottomWidth: 0.5,
+    borderBottomColor: COLORS.border,
+  },
+  stationHeaderText: {
     fontFamily: FONTS.bold,
     fontSize: SIZES.xs,
     color: COLORS.textSecondary,
-    textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
-    paddingBottom: SPACING.xs,
-    borderBottomWidth: 0.5,
-    borderBottomColor: COLORS.border,
+  },
+  stationChevron: {
+    fontFamily: FONTS.bold,
+    fontSize: SIZES.md,
+    color: COLORS.textSecondary,
+    lineHeight: 18,
   },
 
   menuCard: {
@@ -326,7 +346,6 @@ const styles = StyleSheet.create({
   menuTop:      { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xs },
   menuInfo:     { flex: 1, marginRight: SPACING.md },
   menuName:     { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary, letterSpacing: -0.3 },
-  menuCategory: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
   menuCalorie:  { alignItems: 'flex-end' },
   menuCalNum:   { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.primary, letterSpacing: -0.5 },
   menuCalLabel: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
@@ -356,16 +375,16 @@ const styles = StyleSheet.create({
   modalTitle:  { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.textPrimary, marginBottom: SPACING.sm, letterSpacing: -0.5 },
   modalDesc:   { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary, marginBottom: SPACING.xl, lineHeight: 20 },
 
-  modalCalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xl },
+  modalCalRow:       { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xl },
   modalSecondaryRow: { marginTop: -SPACING.lg, marginBottom: SPACING.lg },
-  modalCalBox: { alignItems: 'center', flex: 1 },
-  modalCalNum: { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.textPrimary, letterSpacing: -0.5 },
+  modalCalBox:       { alignItems: 'center', flex: 1 },
+  modalCalNum:       { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.textPrimary, letterSpacing: -0.5 },
   modalSecondaryNum: { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.textSecondary, letterSpacing: -0.3 },
-  modalCalLabel: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
+  modalCalLabel:     { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
 
-  allergenRow:  { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.md },
+  allergenRow:   { flexDirection: 'row', alignItems: 'center', marginBottom: SPACING.md },
   allergenLabel: { fontFamily: FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.error },
-  allergenList: { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary },
+  allergenList:  { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary },
 
   modalActions: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.xl },
 });
