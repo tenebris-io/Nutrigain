@@ -19,21 +19,21 @@ export default function DiningDetailScreen({ route, navigation }) {
   const { diningHalls, getFilteredMenuItems, activeFilters, toggleFilter, logMeal } = useApp();
   const hall = diningHalls.find((h) => h.id === hallId);
 
-  const [period, setPeriod]                   = useState('all');
-  const [selected, setSelected]               = useState(null);
+  const [period, setPeriod]                       = useState('all');
+  const [selected, setSelected]                   = useState(null);
+  const [servings, setServings]                   = useState(1);
+  // undefined / true = collapsed (default), false = open
   const [collapsedStations, setCollapsedStations] = useState({});
 
   if (!hall) return null;
 
-  // Build meal period tabs from what this hall actually serves.
-  // If the hall doesn't have separate dinner items, label the lunch tab "Lunch/Dinner".
   const mealTabs = useMemo(() => {
-    const served  = hall.currentMeals || [];
+    const served    = hall.currentMeals || [];
     const hasDinner = served.includes('dinner');
-    const tabs = [{ label: 'All', value: 'all' }];
-    if (served.includes('breakfast')) tabs.push({ label: 'Breakfast',    value: 'breakfast' });
+    const tabs      = [{ label: 'All', value: 'all' }];
+    if (served.includes('breakfast')) tabs.push({ label: 'Breakfast', value: 'breakfast' });
     if (served.includes('lunch'))     tabs.push({ label: hasDinner ? 'Lunch' : 'Lunch/Dinner', value: 'lunch' });
-    if (hasDinner)                    tabs.push({ label: 'Dinner',       value: 'dinner' });
+    if (hasDinner)                    tabs.push({ label: 'Dinner', value: 'dinner' });
     return tabs;
   }, [hall.currentMeals]);
 
@@ -52,19 +52,36 @@ export default function DiningDetailScreen({ route, navigation }) {
     return Object.entries(groups);
   }, [items]);
 
+  // Stations start collapsed (undefined !== false → collapsed)
+  const isCollapsed = (name) => collapsedStations[name] !== false;
+
   const toggleStation = (name) => {
-    setCollapsedStations((prev) => ({ ...prev, [name]: !prev[name] }));
+    setCollapsedStations((prev) => ({ ...prev, [name]: prev[name] !== false }));
   };
 
   const handlePeriodChange = (value) => {
     setPeriod(value);
-    setCollapsedStations({});
+    setCollapsedStations({});   // reset all to collapsed
   };
 
-  const handleLog = (item) => {
-    logMeal(item, hall.name);
+  const handleSelectItem = (item) => {
+    setSelected(item);
+    setServings(1);
+  };
+
+  const handleLog = () => {
+    const adjusted = {
+      ...selected,
+      calories: Math.round(selected.calories * servings),
+      protein:  Math.round(selected.protein  * servings),
+      carbs:    Math.round(selected.carbs    * servings),
+      fat:      Math.round(selected.fat      * servings),
+    };
+    logMeal(adjusted, hall.name);
     setSelected(null);
-    Alert.alert('Logged!', `${item.name} added to today's meals.`, [{ text: 'OK' }]);
+    setServings(1);
+    const label = servings > 1 ? `${servings}x ${selected.name}` : selected.name;
+    Alert.alert('Logged!', `${label} added to today's meals.`, [{ text: 'OK' }]);
   };
 
   const statusColor = { green: COLORS.green, yellow: COLORS.warning, red: COLORS.error }[hall.status] || COLORS.textSecondary;
@@ -109,7 +126,7 @@ export default function DiningDetailScreen({ route, navigation }) {
         ))}
       </ScrollView>
 
-      {/* Meal period tabs — dynamic per hall */}
+      {/* Meal period tabs */}
       <View style={styles.periodTabs}>
         {mealTabs.map((t) => (
           <TouchableOpacity
@@ -132,7 +149,7 @@ export default function DiningDetailScreen({ route, navigation }) {
           </View>
         ) : (
           stationGroups.map(([station, stationItems]) => {
-            const collapsed = !!collapsedStations[station];
+            const collapsed = isCollapsed(station);
             return (
               <View key={station}>
                 <TouchableOpacity
@@ -148,7 +165,7 @@ export default function DiningDetailScreen({ route, navigation }) {
                   <TouchableOpacity
                     key={item.id}
                     style={styles.menuCard}
-                    onPress={() => setSelected(item)}
+                    onPress={() => handleSelectItem(item)}
                     activeOpacity={0.88}
                   >
                     <View style={styles.menuTop}>
@@ -199,21 +216,42 @@ export default function DiningDetailScreen({ route, navigation }) {
                   <Text style={styles.modalDesc}>{selected.description}</Text>
                 ) : null}
 
+                {/* Servings selector */}
+                <View style={styles.servingRow}>
+                  <Text style={styles.servingLabel}>Servings</Text>
+                  <View style={styles.servingControl}>
+                    <TouchableOpacity
+                      style={styles.servingBtn}
+                      onPress={() => setServings((s) => Math.max(1, s - 1))}
+                    >
+                      <Text style={styles.servingBtnText}>−</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.servingCount}>{servings}</Text>
+                    <TouchableOpacity
+                      style={styles.servingBtn}
+                      onPress={() => setServings((s) => Math.min(10, s + 1))}
+                    >
+                      <Text style={styles.servingBtnText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Nutrition scaled to servings */}
                 <View style={styles.modalCalRow}>
                   <View style={styles.modalCalBox}>
-                    <Text style={styles.modalCalNum}>{selected.calories}</Text>
+                    <Text style={styles.modalCalNum}>{Math.round(selected.calories * servings)}</Text>
                     <Text style={styles.modalCalLabel}>Calories</Text>
                   </View>
                   <View style={styles.modalCalBox}>
-                    <Text style={styles.modalCalNum}>{selected.protein}g</Text>
+                    <Text style={styles.modalCalNum}>{Math.round(selected.protein * servings)}g</Text>
                     <Text style={styles.modalCalLabel}>Protein</Text>
                   </View>
                   <View style={styles.modalCalBox}>
-                    <Text style={styles.modalCalNum}>{selected.carbs}g</Text>
+                    <Text style={styles.modalCalNum}>{Math.round(selected.carbs * servings)}g</Text>
                     <Text style={styles.modalCalLabel}>Carbs</Text>
                   </View>
                   <View style={styles.modalCalBox}>
-                    <Text style={styles.modalCalNum}>{selected.fat}g</Text>
+                    <Text style={styles.modalCalNum}>{Math.round(selected.fat * servings)}g</Text>
                     <Text style={styles.modalCalLabel}>Fat</Text>
                   </View>
                 </View>
@@ -222,13 +260,13 @@ export default function DiningDetailScreen({ route, navigation }) {
                   <View style={[styles.modalCalRow, styles.modalSecondaryRow]}>
                     {selected.sodium > 0 && (
                       <View style={styles.modalCalBox}>
-                        <Text style={styles.modalSecondaryNum}>{selected.sodium}mg</Text>
+                        <Text style={styles.modalSecondaryNum}>{Math.round(selected.sodium * servings)}mg</Text>
                         <Text style={styles.modalCalLabel}>Sodium</Text>
                       </View>
                     )}
                     {selected.fiber > 0 && (
                       <View style={styles.modalCalBox}>
-                        <Text style={styles.modalSecondaryNum}>{selected.fiber}g</Text>
+                        <Text style={styles.modalSecondaryNum}>{Math.round(selected.fiber * servings)}g</Text>
                         <Text style={styles.modalCalLabel}>Fiber</Text>
                       </View>
                     )}
@@ -236,11 +274,11 @@ export default function DiningDetailScreen({ route, navigation }) {
                 )}
 
                 <View style={{ marginBottom: SPACING.lg }}>
-                  <MacroBar label="Protein" current={selected.protein} goal={40} color={COLORS.primary} />
-                  <MacroBar label="Carbs"   current={selected.carbs}   goal={80} color={COLORS.secondary} />
-                  <MacroBar label="Fat"     current={selected.fat}     goal={30} color={COLORS.yellow} />
+                  <MacroBar label="Protein" current={Math.round(selected.protein * servings)} goal={40} color={COLORS.primary} />
+                  <MacroBar label="Carbs"   current={Math.round(selected.carbs   * servings)} goal={80} color={COLORS.secondary} />
+                  <MacroBar label="Fat"     current={Math.round(selected.fat     * servings)} goal={30} color={COLORS.yellow} />
                   {selected.fiber > 0 && (
-                    <MacroBar label="Fiber" current={selected.fiber} goal={15} color={COLORS.success} />
+                    <MacroBar label="Fiber" current={Math.round(selected.fiber * servings)} goal={15} color={COLORS.success} />
                   )}
                 </View>
 
@@ -252,7 +290,7 @@ export default function DiningDetailScreen({ route, navigation }) {
                 )}
 
                 {selected.dietary.length > 0 && (
-                  <View style={styles.dietaryRow}>
+                  <View style={[styles.dietaryRow, { marginBottom: SPACING.sm }]}>
                     {selected.dietary.map((d) => (
                       <Badge key={d} label={d} color={DIETARY_COLORS[d] || 'primary'} />
                     ))}
@@ -261,7 +299,11 @@ export default function DiningDetailScreen({ route, navigation }) {
 
                 <View style={styles.modalActions}>
                   <Button label="Cancel" variant="secondary" onPress={() => setSelected(null)} style={{ flex: 1 }} />
-                  <Button label="Log this meal +" onPress={() => handleLog(selected)} style={{ flex: 2 }} />
+                  <Button
+                    label={servings > 1 ? `Log ${servings}x +` : 'Log this meal +'}
+                    onPress={handleLog}
+                    style={{ flex: 2 }}
+                  />
                 </View>
               </>
             )}
@@ -295,20 +337,10 @@ const styles = StyleSheet.create({
   capacityDetails:  { flexDirection: 'row', gap: SPACING.xl },
   capacityInfo:     { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
 
-  filterScroll: {
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 0.5,
-    borderBottomColor: COLORS.border,
-  },
-  filterRow: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-  },
+  filterScroll: { backgroundColor: COLORS.surface, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
+  filterRow:    { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm },
 
-  periodTabs: {
-    flexDirection: 'row', backgroundColor: COLORS.surface,
-    borderBottomWidth: 0.5, borderBottomColor: COLORS.border,
-  },
+  periodTabs:    { flexDirection: 'row', backgroundColor: COLORS.surface, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
   tab:           { flex: 1, paddingVertical: SPACING.md, alignItems: 'center' },
   tabActive:     { borderBottomWidth: 2, borderBottomColor: COLORS.primary },
   tabText:       { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
@@ -317,32 +349,15 @@ const styles = StyleSheet.create({
   menuContent: { padding: SPACING.xl },
 
   stationHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: SPACING.lg,
-    marginBottom: SPACING.sm,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: SPACING.lg, marginBottom: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderBottomWidth: 0.5,
-    borderBottomColor: COLORS.border,
+    borderBottomWidth: 0.5, borderBottomColor: COLORS.border,
   },
-  stationHeaderText: {
-    fontFamily: FONTS.bold,
-    fontSize: SIZES.xs,
-    color: COLORS.textSecondary,
-    letterSpacing: 0.8,
-  },
-  stationChevron: {
-    fontFamily: FONTS.bold,
-    fontSize: SIZES.md,
-    color: COLORS.textSecondary,
-    lineHeight: 18,
-  },
+  stationHeaderText: { fontFamily: FONTS.bold, fontSize: SIZES.xs, color: COLORS.textSecondary, letterSpacing: 0.8 },
+  stationChevron:    { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.textSecondary, lineHeight: 18 },
 
-  menuCard: {
-    backgroundColor: COLORS.surface, borderRadius: RADIUS.md,
-    padding: SPACING.xl, marginBottom: SPACING.md, ...SHADOWS.subtle,
-  },
+  menuCard:     { backgroundColor: COLORS.surface, borderRadius: RADIUS.md, padding: SPACING.xl, marginBottom: SPACING.md, ...SHADOWS.subtle },
   menuTop:      { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xs },
   menuInfo:     { flex: 1, marginRight: SPACING.md },
   menuName:     { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary, letterSpacing: -0.3 },
@@ -351,12 +366,8 @@ const styles = StyleSheet.create({
   menuCalLabel: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
   menuDesc:     { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary, marginBottom: SPACING.md, lineHeight: 20 },
   menuMacros:   { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.sm },
-  macroChip:    {
-    fontFamily: FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary,
-    backgroundColor: COLORS.background, paddingHorizontal: SPACING.sm,
-    paddingVertical: 3, borderRadius: RADIUS.full,
-  },
-  dietaryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs, marginTop: SPACING.xs },
+  macroChip:    { fontFamily: FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary, backgroundColor: COLORS.background, paddingHorizontal: SPACING.sm, paddingVertical: 3, borderRadius: RADIUS.full },
+  dietaryRow:   { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs, marginTop: SPACING.xs },
 
   empty:      { alignItems: 'center', paddingTop: SPACING.huge },
   emptyEmoji: { fontSize: 48, marginBottom: SPACING.md },
@@ -364,16 +375,26 @@ const styles = StyleSheet.create({
   emptySub:   { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet:   {
-    backgroundColor: COLORS.surface, borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg,
-    padding: SPACING.xl, paddingTop: SPACING.md,
+  modalSheet:   { backgroundColor: COLORS.surface, borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg, padding: SPACING.xl, paddingTop: SPACING.md },
+  modalHandle:  { width: 40, height: 4, backgroundColor: COLORS.border, borderRadius: RADIUS.full, alignSelf: 'center', marginBottom: SPACING.xl },
+  modalTitle:   { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.textPrimary, marginBottom: SPACING.sm, letterSpacing: -0.5 },
+  modalDesc:    { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary, marginBottom: SPACING.lg, lineHeight: 20 },
+
+  servingRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: COLORS.background, borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm,
+    marginBottom: SPACING.xl,
   },
-  modalHandle: {
-    width: 40, height: 4, backgroundColor: COLORS.border,
-    borderRadius: RADIUS.full, alignSelf: 'center', marginBottom: SPACING.xl,
+  servingLabel:   { fontFamily: FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.textPrimary },
+  servingControl: { flexDirection: 'row', alignItems: 'center', gap: SPACING.lg },
+  servingBtn: {
+    width: 32, height: 32, borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center',
   },
-  modalTitle:  { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.textPrimary, marginBottom: SPACING.sm, letterSpacing: -0.5 },
-  modalDesc:   { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary, marginBottom: SPACING.xl, lineHeight: 20 },
+  servingBtnText: { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.surface, lineHeight: 20 },
+  servingCount:   { fontFamily: FONTS.bold, fontSize: SIZES.lg, color: COLORS.textPrimary, minWidth: 24, textAlign: 'center' },
 
   modalCalRow:       { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xl },
   modalSecondaryRow: { marginTop: -SPACING.lg, marginBottom: SPACING.lg },
