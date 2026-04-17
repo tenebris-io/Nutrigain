@@ -56,7 +56,7 @@ export default function DiningDetailScreen({ route, navigation }) {
   const isCollapsed = (name) => collapsedStations[name] !== false;
 
   const toggleStation = (name) => {
-    setCollapsedStations((prev) => ({ ...prev, [name]: prev[name] !== false }));
+    setCollapsedStations((prev) => ({ ...prev, [name]: prev[name] === false }));
   };
 
   const handlePeriodChange = (value) => {

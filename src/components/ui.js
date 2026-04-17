@@ -250,14 +250,16 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
   },
   chip: {
+    height: 34,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
     marginRight: SPACING.sm,
     alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chipActive: {
     backgroundColor: COLORS.primary,
