@@ -7,8 +7,8 @@ import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { CHATBOT_SUGGESTIONS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 
-// ⚠️  Replace with your Anthropic API key from console.anthropic.com
-const ANTHROPIC_API_KEY = 'YOUR_API_KEY_HERE';
+// API key is loaded from .env (EXPO_PUBLIC_ANTHROPIC_API_KEY) — never hard-code it here
+const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
 
 // ---------------------------------------------------------------------------
 // Build a system prompt from whatever menu data is currently loaded
@@ -88,9 +88,8 @@ export default function ChatbotScreen() {
       text: `Hey ${user?.name || 'there'}! I'm your OSU dining assistant. Ask me about menu options, dietary restrictions, nutrition info, or wait times at any dining hall.`,
     },
   ]);
-  const [input,           setInput]           = useState('');
-  const [loading,         setLoading]         = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(true);
+  const [input,   setInput]   = useState('');
+  const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -102,7 +101,6 @@ export default function ChatbotScreen() {
     if (!userText || loading) return;
 
     setInput('');
-    setShowSuggestions(false);
 
     const userMsg = { id: `u-${Date.now()}`, role: 'user', text: userText };
     setMessages((prev) => [...prev, userMsg]);
@@ -234,8 +232,8 @@ export default function ChatbotScreen() {
             </View>
           )}
 
-          {/* Suggestion chips — shown inline until first send */}
-          {showSuggestions && !loading && (
+          {/* Suggestion chips — always visible for quick prompts */}
+          {!loading && (
             <View style={styles.chips}>
               {CHATBOT_SUGGESTIONS.map((s) => (
                 <TouchableOpacity
