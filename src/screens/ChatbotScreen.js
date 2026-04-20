@@ -7,6 +7,7 @@ import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { CHATBOT_SUGGESTIONS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 
+// ⚠️  Replace with your Anthropic API key from console.anthropic.com
 const ANTHROPIC_API_KEY = 'YOUR_API_KEY_HERE';
 
 // ---------------------------------------------------------------------------
@@ -107,6 +108,16 @@ export default function ChatbotScreen() {
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
+    // Guard: catch placeholder key before making a doomed network call
+    if (!ANTHROPIC_API_KEY || ANTHROPIC_API_KEY === 'YOUR_API_KEY_HERE') {
+      setMessages((prev) => [...prev, {
+        id: `err-${Date.now()}`, role: 'assistant', error: true,
+        text: 'No API key set. Open src/screens/ChatbotScreen.js and replace YOUR_API_KEY_HERE with your Anthropic API key from console.anthropic.com.',
+      }]);
+      setLoading(false);
+      return;
+    }
+
     try {
       const history = messages
         .filter((m) => m.id !== '0')
@@ -127,22 +138,29 @@ export default function ChatbotScreen() {
         }),
       });
 
-      const data      = await response.json();
-      const replyText = data.content?.[0]?.text
-        || "I'm having trouble connecting right now. Try again in a moment!";
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Surface the real API error (401 bad key, 429 rate limit, etc.)
+        const apiMsg = data?.error?.message || `API error ${response.status}`;
+        throw new Error(apiMsg);
+      }
+
+      const replyText = data.content?.[0]?.text;
+      if (!replyText) throw new Error('Empty response from API');
 
       setMessages((prev) => [
         ...prev,
         { id: `a-${Date.now()}`, role: 'assistant', text: replyText },
       ]);
-    } catch {
+    } catch (err) {
       setMessages((prev) => [
         ...prev,
         {
           id:    `err-${Date.now()}`,
           role:  'assistant',
-          text:  "Sorry, I can't connect right now. Check your internet and try again!",
           error: true,
+          text:  `Error: ${err.message || "Can't connect — check your internet and try again."}`,
         },
       ]);
     } finally {
