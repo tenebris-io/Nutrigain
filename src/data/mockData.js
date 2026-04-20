@@ -298,11 +298,12 @@ export const WEEKLY_NUTRITION = [
 export const LOGGED_MEALS = [];
 
 export const CHATBOT_SUGGESTIONS = [
-  "What's vegan at Baker today?",
-  "High-protein options under 500 cal?",
-  "Which hall is least crowded right now?",
-  "What's gluten-free for breakfast?",
-  "How many swipes do I have left?",
+  "What's highest in protein today?",
+  "Low-calorie lunch options under 400 cal?",
+  "What has the least sodium on the menu?",
+  "Best meal to hit my protein goal?",
+  "What are the vegan high-protein options?",
+  "Compare the macros between two items",
 ];
 
 export const USER_PROFILE = {
