@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground }
 import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { Card, Badge, MacroBar, SectionHeader, CrowdingDot } from '../components/ui';
 import { useApp } from '../context/AppContext';
+import { isHallOpen, todayLabel } from '../utils/diningUtils';
 
 const getGreeting = () => {
   const h = new Date().getHours();
@@ -20,7 +21,15 @@ export default function HomeScreen({ navigation }) {
   const { user, diningHalls, loggedMeals } = useApp();
   const calPct = Math.min((user.currentCalories / user.calorieGoal) * 100, 100);
   const remaining = Math.max(user.calorieGoal - user.currentCalories, 0);
-  const openHalls = diningHalls.slice(0, 3);
+  // Sort open halls first, then show up to 3
+  const sortedHalls = [...diningHalls].sort((a, b) => {
+    const aOpen = isHallOpen(a.hours);
+    const bOpen = isHallOpen(b.hours);
+    if (aOpen && !bOpen) return -1;
+    if (!aOpen && bOpen) return 1;
+    return 0;
+  });
+  const openHalls = sortedHalls.slice(0, 3);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -30,7 +39,8 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.heroTop}>
           <View>
             <Text style={styles.heroAppName}>Nutrigain</Text>
-            <Text style={styles.heroGreeting}>{getGreeting()}, {user.name.split(' ')[0]}</Text>
+            <Text style={styles.heroGreeting}>{getGreeting()}, {(user.name || 'there').split(' ')[0]}</Text>
+            <Text style={styles.heroDate}>{todayLabel()}</Text>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.avatar}>
             <Text style={styles.avatarText}>{(user.name || 'S')[0].toUpperCase()}</Text>
@@ -101,14 +111,33 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('DiningDetail', { hallId: hall.id })}
             activeOpacity={0.7}
           >
-            <View style={[styles.hallDotWrap, { backgroundColor: hall.status === 'green' ? COLORS.greenLight : hall.status === 'yellow' ? COLORS.yellowLight : COLORS.redLight }]}>
-              <CrowdingDot status={hall.status} />
-            </View>
-            <View style={styles.hallMeta}>
-              <Text style={styles.hallName}>{hall.name}</Text>
-              <Text style={styles.hallSub}>{hall.distance} · {hall.waitTime}</Text>
-            </View>
-            <Text style={styles.hallChevron}>›</Text>
+            {(() => {
+              const open = isHallOpen(hall.hours);
+              const dotStatus = open === false ? 'closed' : hall.status;
+              const dotBg = open === false ? COLORS.border
+                : hall.status === 'green' ? COLORS.greenLight
+                : hall.status === 'yellow' ? COLORS.yellowLight
+                : COLORS.redLight;
+              return (
+                <>
+                  <View style={[styles.hallDotWrap, { backgroundColor: dotBg }]}>
+                    {open === false
+                      ? <View style={[styles.closedDot]} />
+                      : <CrowdingDot status={hall.status} />}
+                  </View>
+                  <View style={styles.hallMeta}>
+                    <Text style={styles.hallName}>{hall.name}</Text>
+                    <Text style={styles.hallSub}>
+                      {hall.distance} · {open === false ? 'Closed' : hall.waitTime}
+                    </Text>
+                  </View>
+                  {open === false && (
+                    <Text style={styles.closedLabel}>Closed</Text>
+                  )}
+                  <Text style={styles.hallChevron}>›</Text>
+                </>
+              );
+            })()}
           </TouchableOpacity>
         ))}
       </View>
@@ -170,6 +199,12 @@ const styles = StyleSheet.create({
     fontSize: SIZES.sm,
     color: 'rgba(255,255,255,0.75)',
     marginTop: 2,
+  },
+  heroDate: {
+    fontFamily: FONTS.regular,
+    fontSize: SIZES.xs,
+    color: 'rgba(255,255,255,0.55)',
+    marginTop: 1,
   },
   avatar: {
     width: 40,
@@ -334,6 +369,8 @@ const styles = StyleSheet.create({
   hallName: { fontFamily: FONTS.semiBold, fontSize: SIZES.md, color: COLORS.textPrimary },
   hallSub: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 1 },
   hallChevron: { fontSize: 20, color: COLORS.border, fontFamily: FONTS.regular },
+  closedDot: { width: 9, height: 9, borderRadius: RADIUS.full, backgroundColor: COLORS.textSecondary },
+  closedLabel: { fontFamily: FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary },
 
   // Logged meals
   emptyCard: {

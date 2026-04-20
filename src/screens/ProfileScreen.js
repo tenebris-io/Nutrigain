@@ -12,11 +12,14 @@ export default function ProfileScreen({ navigation }) {
   const { user, setUser } = useApp();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
-    name: user.name,
-    major: user.major,
-    year: user.year,
-    calorieGoal: user.calorieGoal.toString(),
-    proteinGoal: user.proteinGoal.toString(),
+    name:             user.name,
+    major:            user.major,
+    year:             user.year,
+    calorieGoal:      String(user.calorieGoal ?? 2000),
+    proteinGoal:      String(user.proteinGoal ?? 90),
+    carbGoal:         String(user.carbGoal    ?? 250),
+    fatGoal:          String(user.fatGoal     ?? 70),
+    swipesRemaining:  String(user.swipesRemaining ?? 0),
   });
   const [restrictions, setRestrictions] = useState([...user.dietaryRestrictions]);
   const [notifications, setNotifications] = useState(true);
@@ -28,11 +31,14 @@ export default function ProfileScreen({ navigation }) {
   const save = () => {
     setUser((prev) => ({
       ...prev,
-      name: form.name,
-      major: form.major,
-      year: form.year,
-      calorieGoal: parseInt(form.calorieGoal) || prev.calorieGoal,
-      proteinGoal: parseInt(form.proteinGoal) || prev.proteinGoal,
+      name:             form.name,
+      major:            form.major,
+      year:             form.year,
+      calorieGoal:      parseInt(form.calorieGoal)     || prev.calorieGoal,
+      proteinGoal:      parseInt(form.proteinGoal)     || prev.proteinGoal,
+      carbGoal:         parseInt(form.carbGoal)        || prev.carbGoal,
+      fatGoal:          parseInt(form.fatGoal)         || prev.fatGoal,
+      swipesRemaining:  Math.max(0, parseInt(form.swipesRemaining) || 0),
       dietaryRestrictions: restrictions,
     }));
     setEditing(false);
@@ -116,11 +122,14 @@ export default function ProfileScreen({ navigation }) {
           {editing ? (
             <>
               {[
-                { label: 'Name', key: 'name', keyboard: 'default' },
-                { label: 'Major', key: 'major', keyboard: 'default' },
-                { label: 'Year', key: 'year', keyboard: 'default' },
-                { label: 'Daily Calorie Goal', key: 'calorieGoal', keyboard: 'numeric' },
-                { label: 'Daily Protein Goal (g)', key: 'proteinGoal', keyboard: 'numeric' },
+                { label: 'Name',                  key: 'name',            keyboard: 'default' },
+                { label: 'Major',                 key: 'major',           keyboard: 'default' },
+                { label: 'Year',                  key: 'year',            keyboard: 'default' },
+                { label: 'Daily Calorie Goal',    key: 'calorieGoal',     keyboard: 'numeric' },
+                { label: 'Daily Protein Goal (g)', key: 'proteinGoal',    keyboard: 'numeric' },
+                { label: 'Daily Carb Goal (g)',   key: 'carbGoal',        keyboard: 'numeric' },
+                { label: 'Daily Fat Goal (g)',    key: 'fatGoal',         keyboard: 'numeric' },
+                { label: 'Swipes Remaining',      key: 'swipesRemaining', keyboard: 'numeric' },
               ].map(({ label, key, keyboard }, i, arr) => (
                 <React.Fragment key={key}>
                   <View style={styles.formGroup}>
@@ -139,11 +148,14 @@ export default function ProfileScreen({ navigation }) {
           ) : (
             <>
               {[
-                ['Name', user.name],
-                ['Major', user.major],
-                ['Year', user.year],
-                ['Calorie Goal', `${user.calorieGoal} kcal/day`],
-                ['Protein Goal', `${user.proteinGoal}g/day`],
+                ['Name',           user.name  || '—'],
+                ['Major',          user.major || '—'],
+                ['Year',           user.year  || '—'],
+                ['Calorie Goal',   `${user.calorieGoal} kcal/day`],
+                ['Protein Goal',   `${user.proteinGoal}g/day`],
+                ['Carb Goal',      `${user.carbGoal}g/day`],
+                ['Fat Goal',       `${user.fatGoal}g/day`],
+                ['Swipes Left',    `${user.swipesRemaining} / ${user.totalSwipes}`],
               ].map(([label, value], i, arr) => (
                 <React.Fragment key={label}>
                   <View style={styles.infoRow}>

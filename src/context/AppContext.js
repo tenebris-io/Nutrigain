@@ -1,13 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { todayISO } from '../utils/diningUtils';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Set to true once you've run `python scripts/scrape_menus.py` at least once
-// and src/data/menuData.js exists.
-// ─────────────────────────────────────────────────────────────────────────────
 const USE_LIVE_DATA = true;
 
-// Mock data — always available as fallback
 import {
   USER_PROFILE,
   LOGGED_MEALS,
@@ -15,7 +11,6 @@ import {
   DINING_HALLS   as MOCK_DINING_HALLS,
 } from '../data/mockData';
 
-// Live data — only imported when the flag is on and the file exists.
 let LIVE_MENU_ITEMS   = null;
 let LIVE_DINING_HALLS = null;
 if (USE_LIVE_DATA) {
@@ -28,16 +23,17 @@ const MENU_ITEMS   = USE_LIVE_DATA ? LIVE_MENU_ITEMS   : MOCK_MENU_ITEMS;
 const DINING_HALLS = USE_LIVE_DATA ? LIVE_DINING_HALLS : MOCK_DINING_HALLS;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Tester credentials
-// ─────────────────────────────────────────────────────────────────────────────
 const VALID_CREDENTIALS = { 'max.1282': 'buckeye123' };
 
-// AsyncStorage keys
+const MEAL_PLAN_SWIPES = { 'Grey 10': 10, 'Scarlet 14': 14, 'Buckeye Unlimited': 999 };
+
 const STORAGE_KEYS = {
   session:     '@nutrigain/session',
   user:        '@nutrigain/user',
   onboarding:  '@nutrigain/onboardingComplete',
   loggedMeals: '@nutrigain/loggedMeals',
+  weeklyData:  '@nutrigain/weeklyData',
+  lastLogDate: '@nutrigain/lastLogDate',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,35 +48,78 @@ export function AppProvider({ children }) {
   const [diningHalls]                           = useState(DINING_HALLS);
   const [activeFilters, setActiveFilters]       = useState([]);
   const [onboardingComplete, setOnboardingState] = useState(false);
+  const [weeklyData, setWeeklyData]             = useState({});
 
-  // ── Bootstrap: load persisted state on mount ────────────────────────────
+  // ── Bootstrap ────────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
-        const [sessionRaw, userRaw, onboardingRaw, mealsRaw] = await Promise.all([
-          AsyncStorage.getItem(STORAGE_KEYS.session),
-          AsyncStorage.getItem(STORAGE_KEYS.user),
-          AsyncStorage.getItem(STORAGE_KEYS.onboarding),
-          AsyncStorage.getItem(STORAGE_KEYS.loggedMeals),
-        ]);
+        const [sessionRaw, userRaw, onboardingRaw, mealsRaw, weeklyRaw, lastDateRaw] =
+          await Promise.all([
+            AsyncStorage.getItem(STORAGE_KEYS.session),
+            AsyncStorage.getItem(STORAGE_KEYS.user),
+            AsyncStorage.getItem(STORAGE_KEYS.onboarding),
+            AsyncStorage.getItem(STORAGE_KEYS.loggedMeals),
+            AsyncStorage.getItem(STORAGE_KEYS.weeklyData),
+            AsyncStorage.getItem(STORAGE_KEYS.lastLogDate),
+          ]);
 
         if (sessionRaw) {
           const session = JSON.parse(sessionRaw);
           if (session.isLoggedIn) setIsLoggedIn(true);
         }
-        if (userRaw) setUserState(JSON.parse(userRaw));
+
+        let loadedUser      = userRaw    ? JSON.parse(userRaw)    : { ...USER_PROFILE };
+        let loadedWeekly    = weeklyRaw  ? JSON.parse(weeklyRaw)  : {};
+        let loadedMeals     = mealsRaw   ? JSON.parse(mealsRaw)   : [];
+        const lastLogDate   = lastDateRaw || null;
+        const today         = todayISO();
+
+        // ── Daily rollover ──────────────────────────────────────────────────
+        if (lastLogDate && lastLogDate !== today) {
+          // Archive the previous day's totals into weeklyData
+          loadedWeekly[lastLogDate] = {
+            calories: loadedUser.currentCalories || 0,
+            protein:  loadedUser.currentProtein  || 0,
+            carbs:    loadedUser.currentCarbs    || 0,
+            fat:      loadedUser.currentFat      || 0,
+          };
+
+          // Increment or reset streak
+          const hadMeals = (loadedWeekly[lastLogDate]?.calories || 0) > 0;
+          loadedUser = {
+            ...loadedUser,
+            streak:          hadMeals ? (loadedUser.streak || 0) + 1 : 0,
+            currentCalories: 0,
+            currentProtein:  0,
+            currentCarbs:    0,
+            currentFat:      0,
+          };
+          loadedMeals = [];
+
+          await Promise.all([
+            AsyncStorage.setItem(STORAGE_KEYS.weeklyData, JSON.stringify(loadedWeekly)),
+            AsyncStorage.setItem(STORAGE_KEYS.user, JSON.stringify(loadedUser)),
+            AsyncStorage.setItem(STORAGE_KEYS.loggedMeals, JSON.stringify([])),
+          ]);
+        }
+
+        await AsyncStorage.setItem(STORAGE_KEYS.lastLogDate, today);
+
         if (onboardingRaw) setOnboardingState(JSON.parse(onboardingRaw));
-        if (mealsRaw) setLoggedMeals(JSON.parse(mealsRaw));
+        setUserState(loadedUser);
+        setLoggedMeals(loadedMeals);
+        setWeeklyData(loadedWeekly);
       } catch (e) {
-        // Ignore storage errors — app starts fresh
+        // Start fresh on storage errors
       } finally {
         setIsLoading(false);
       }
     })();
   }, []);
 
-  // ── Persist user profile whenever it changes (after initial load) ────────
-  const setUser = async (updater) => {
+  // ── Persist user whenever it changes ─────────────────────────────────────
+  const setUser = (updater) => {
     setUserState((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
       AsyncStorage.setItem(STORAGE_KEYS.user, JSON.stringify(next)).catch(() => {});
@@ -88,15 +127,13 @@ export function AppProvider({ children }) {
     });
   };
 
-  // ── Persist onboarding flag ──────────────────────────────────────────────
+  // ── Onboarding flag ──────────────────────────────────────────────────────
   const setOnboardingComplete = async (val) => {
     setOnboardingState(val);
-    try {
-      await AsyncStorage.setItem(STORAGE_KEYS.onboarding, JSON.stringify(val));
-    } catch (e) {}
+    try { await AsyncStorage.setItem(STORAGE_KEYS.onboarding, JSON.stringify(val)); } catch (e) {}
   };
 
-  // ── Login ────────────────────────────────────────────────────────────────
+  // ── Login / logout ───────────────────────────────────────────────────────
   const login = async (username, password) => {
     if (VALID_CREDENTIALS[username] !== password) return false;
     try {
@@ -109,15 +146,13 @@ export function AppProvider({ children }) {
     return true;
   };
 
-  // ── Logout ───────────────────────────────────────────────────────────────
   const logout = async () => {
-    try {
-      await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
-    } catch (e) {}
+    try { await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS)); } catch (e) {}
     setIsLoggedIn(false);
     setOnboardingState(false);
-    setUserState(USER_PROFILE);
-    setLoggedMeals(LOGGED_MEALS);
+    setUserState({ ...USER_PROFILE });
+    setLoggedMeals([]);
+    setWeeklyData({});
   };
 
   // ── Meal logging ─────────────────────────────────────────────────────────
@@ -135,25 +170,20 @@ export function AppProvider({ children }) {
           l.id === existingLog.id
             ? {
                 ...l,
-                items: [
-                  ...l.items,
-                  { menuItemId: menuItem.id, name: menuItem.name, calories: menuItem.calories, hallName },
-                ],
+                items: [...l.items, {
+                  menuItemId: menuItem.id, name: menuItem.name,
+                  calories: menuItem.calories, hallName,
+                }],
                 totalCalories: l.totalCalories + menuItem.calories,
               }
             : l
         );
       } else {
-        next = [
-          ...prev,
-          {
-            id:   `log${Date.now()}`,
-            date: 'today',
-            mealPeriod,
-            items: [{ menuItemId: menuItem.id, name: menuItem.name, calories: menuItem.calories, hallName }],
-            totalCalories: menuItem.calories,
-          },
-        ];
+        next = [...prev, {
+          id: `log${Date.now()}`, date: 'today', mealPeriod,
+          items: [{ menuItemId: menuItem.id, name: menuItem.name, calories: menuItem.calories, hallName }],
+          totalCalories: menuItem.calories,
+        }];
       }
       AsyncStorage.setItem(STORAGE_KEYS.loggedMeals, JSON.stringify(next)).catch(() => {});
       return next;
@@ -161,11 +191,16 @@ export function AppProvider({ children }) {
 
     setUser((prev) => ({
       ...prev,
-      currentCalories: prev.currentCalories + menuItem.calories,
-      currentProtein:  prev.currentProtein  + (menuItem.protein || 0),
-      currentCarbs:    prev.currentCarbs    + (menuItem.carbs   || 0),
-      currentFat:      prev.currentFat      + (menuItem.fat     || 0),
+      currentCalories: (prev.currentCalories || 0) + menuItem.calories,
+      currentProtein:  (prev.currentProtein  || 0) + (menuItem.protein || 0),
+      currentCarbs:    (prev.currentCarbs    || 0) + (menuItem.carbs   || 0),
+      currentFat:      (prev.currentFat      || 0) + (menuItem.fat     || 0),
     }));
+  };
+
+  // ── Swipe setter (user manually enters their balance) ────────────────────
+  const setSwipes = (remaining) => {
+    setUser((prev) => ({ ...prev, swipesRemaining: Math.max(0, remaining) }));
   };
 
   const getFilteredMenuItems = (hallId) =>
@@ -189,6 +224,7 @@ export function AppProvider({ children }) {
         logout,
         user,
         setUser,
+        setSwipes,
         loggedMeals,
         logMeal,
         diningHalls,
@@ -197,7 +233,9 @@ export function AppProvider({ children }) {
         getFilteredMenuItems,
         onboardingComplete,
         setOnboardingComplete,
+        weeklyData,
         usingLiveData: USE_LIVE_DATA,
+        MEAL_PLAN_SWIPES,
       }}
     >
       {children}

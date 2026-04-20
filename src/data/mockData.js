@@ -295,27 +295,7 @@ export const WEEKLY_NUTRITION = [
   { day: 'Sun', calories: 0, goal: 2000, protein: 0, carbs: 0, fat: 0 },
 ];
 
-export const LOGGED_MEALS = [
-  {
-    id: 'log001',
-    date: 'today',
-    mealPeriod: 'breakfast',
-    items: [
-      { menuItemId: 'm004', name: 'Blueberry Acai Bowl', calories: 380, hallName: 'Baker Hall' },
-    ],
-    totalCalories: 380,
-  },
-  {
-    id: 'log002',
-    date: 'today',
-    mealPeriod: 'lunch',
-    items: [
-      { menuItemId: 'm002', name: 'Vegan Lentil Soup', calories: 210, hallName: 'Baker Hall' },
-      { menuItemId: 'm003', name: 'Classic Caesar Salad', calories: 320, hallName: 'Baker Hall' },
-    ],
-    totalCalories: 530,
-  },
-];
+export const LOGGED_MEALS = [];
 
 export const CHATBOT_SUGGESTIONS = [
   "What's vegan at Baker today?",
@@ -326,20 +306,20 @@ export const CHATBOT_SUGGESTIONS = [
 ];
 
 export const USER_PROFILE = {
-  name: 'Max',
-  year: 'Sophomore',
-  major: 'Public Health',
-  dietaryRestrictions: ['vegan', 'gluten-free'],
+  name: '',
+  year: '',
+  major: '',
+  dietaryRestrictions: [],
   calorieGoal: 2000,
   proteinGoal: 90,
   carbGoal: 250,
   fatGoal: 70,
-  swipesRemaining: 8,
+  swipesRemaining: 0,
   totalSwipes: 14,
   mealPlan: 'Scarlet 14',
-  streak: 5,
-  currentCalories: 910,
-  currentProtein: 42,
-  currentCarbs: 108,
-  currentFat: 28,
+  streak: 0,
+  currentCalories: 0,
+  currentProtein: 0,
+  currentCarbs: 0,
+  currentFat: 0,
 };

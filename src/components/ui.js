@@ -112,6 +112,7 @@ export function SectionHeader({ title, subtitle, action, onAction }) {
 
 // ── CrowdingDot ───────────────────────────────────────────────────────
 export function CrowdingDot({ status }) {
+  if (!status) return null;
   const colorMap = { green: COLORS.green, yellow: COLORS.yellow, red: COLORS.red };
   return <View style={[styles.dot, { backgroundColor: colorMap[status] || COLORS.textSecondary }]} />;
 }

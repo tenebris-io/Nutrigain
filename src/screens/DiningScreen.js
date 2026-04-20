@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 
 import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { DietaryChip, CrowdingDot, SectionHeader } from '../components/ui';
 import { useApp } from '../context/AppContext';
+import { isHallOpen, todayLabel } from '../utils/diningUtils';
 
 const FILTERS = ['vegan', 'gluten-free', 'vegetarian', 'high-protein', 'dairy-free'];
-const STATUS_LABEL = { green: 'Open', yellow: 'Busy', red: 'Crowded' };
-const STATUS_COLOR = { green: COLORS.green, yellow: COLORS.yellow, red: COLORS.red };
-const STATUS_BG = { green: COLORS.greenLight, yellow: COLORS.yellowLight, red: COLORS.redLight };
+const STATUS_LABEL = { green: 'Open', yellow: 'Busy', red: 'Crowded', closed: 'Closed' };
+const STATUS_COLOR = { green: COLORS.green, yellow: COLORS.yellow, red: COLORS.red, closed: COLORS.textSecondary };
+const STATUS_BG    = { green: COLORS.greenLight, yellow: COLORS.yellowLight, red: COLORS.redLight, closed: COLORS.border };
 
 export default function DiningScreen({ navigation }) {
   const { diningHalls, activeFilters, toggleFilter } = useApp();
@@ -24,7 +25,7 @@ export default function DiningScreen({ navigation }) {
       {/* ── Page header ──────────────────────────────────────────── */}
       <View style={styles.pageHeader}>
         <Text style={styles.title}>Dining</Text>
-        <Text style={styles.subtitle}>Real-time availability across OSU campus</Text>
+        <Text style={styles.subtitle}>Real-time availability · {todayLabel()}</Text>
       </View>
 
       {/* ── Search bar (OSU-style) ────────────────────────────────── */}
@@ -51,7 +52,10 @@ export default function DiningScreen({ navigation }) {
 
       {/* ── Hall cards ────────────────────────────────────────────── */}
       <View style={styles.hallList}>
-        {filtered.map((hall, i) => (
+        {filtered.map((hall, i) => {
+          const open = isHallOpen(hall.hours);
+          const displayStatus = open === false ? 'closed' : hall.status;
+          return (
           <TouchableOpacity
             key={hall.id}
             style={[styles.hallCard, i < filtered.length - 1 && styles.hallCardBorder]}
@@ -60,17 +64,17 @@ export default function DiningScreen({ navigation }) {
           >
             {/* Hall top row */}
             <View style={styles.hallTop}>
-              <View style={[styles.hallIconWrap, { backgroundColor: STATUS_BG[hall.status] }]}>
+              <View style={[styles.hallIconWrap, { backgroundColor: STATUS_BG[displayStatus] }]}>
                 <Text style={styles.hallIcon}>🍽️</Text>
               </View>
               <View style={styles.hallMeta}>
                 <Text style={styles.hallName}>{hall.name}</Text>
                 <Text style={styles.hallLocation}>{hall.location} · {hall.distance}</Text>
               </View>
-              <View style={[styles.statusPill, { backgroundColor: STATUS_BG[hall.status] }]}>
-                <CrowdingDot status={hall.status} />
-                <Text style={[styles.statusText, { color: STATUS_COLOR[hall.status] }]}>
-                  {STATUS_LABEL[hall.status]}
+              <View style={[styles.statusPill, { backgroundColor: STATUS_BG[displayStatus] }]}>
+                <CrowdingDot status={displayStatus === 'closed' ? null : displayStatus} />
+                <Text style={[styles.statusText, { color: STATUS_COLOR[displayStatus] }]}>
+                  {STATUS_LABEL[displayStatus]}
                 </Text>
               </View>
             </View>
@@ -97,7 +101,8 @@ export default function DiningScreen({ navigation }) {
               <Text style={styles.viewMenu}>View Menu ›</Text>
             </View>
           </TouchableOpacity>
-        ))}
+          );
+        })}
       </View>
 
       {/* Crowding legend */}
