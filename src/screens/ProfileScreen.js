@@ -9,7 +9,7 @@ import { useApp } from '../context/AppContext';
 const DIETARY_OPTIONS = ['vegan', 'gluten-free', 'vegetarian', 'dairy-free', 'nut-free', 'high-protein'];
 
 export default function ProfileScreen({ navigation }) {
-  const { user, setUser } = useApp();
+  const { user, setUser, classes } = useApp();
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     name:             user.name,
@@ -192,6 +192,26 @@ export default function ProfileScreen({ navigation }) {
         />
       </View>
 
+      {/* ── Class Schedule ───────────────────────────────────────── */}
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>CLASS SCHEDULE</Text>
+        <TouchableOpacity
+          style={[styles.card, styles.scheduleRow]}
+          onPress={() => navigation.navigate('Schedule')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.scheduleInfo}>
+            <Text style={styles.scheduleTitle}>Manage Schedule</Text>
+            <Text style={styles.scheduleSub}>
+              {classes.length === 0
+                ? 'No classes added — tap to set up'
+                : `${classes.length} class${classes.length !== 1 ? 'es' : ''} scheduled`}
+            </Text>
+          </View>
+          <Text style={styles.scheduleChevron}>›</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* ── Notifications ────────────────────────────────────────── */}
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>NOTIFICATIONS</Text>
@@ -355,6 +375,13 @@ const styles = StyleSheet.create({
   settingInfo: { flex: 1 },
   settingLabel: { fontFamily: FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.textPrimary },
   settingDesc: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+
+  // Schedule
+  scheduleRow:    { flexDirection: 'row', alignItems: 'center' },
+  scheduleInfo:   { flex: 1 },
+  scheduleTitle:  { fontFamily: FONTS.semiBold, fontSize: SIZES.md, color: COLORS.textPrimary },
+  scheduleSub:    { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  scheduleChevron: { fontSize: 22, color: COLORS.border, fontFamily: FONTS.regular },
 
   // About
   aboutCard: { alignItems: 'center', gap: 4 },

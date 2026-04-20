@@ -34,6 +34,7 @@ const STORAGE_KEYS = {
   loggedMeals: '@nutrigain/loggedMeals',
   weeklyData:  '@nutrigain/weeklyData',
   lastLogDate: '@nutrigain/lastLogDate',
+  classes:     '@nutrigain/classes',
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -49,12 +50,13 @@ export function AppProvider({ children }) {
   const [activeFilters, setActiveFilters]       = useState([]);
   const [onboardingComplete, setOnboardingState] = useState(false);
   const [weeklyData, setWeeklyData]             = useState({});
+  const [classes, setClasses]                   = useState([]);
 
   // ── Bootstrap ────────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
       try {
-        const [sessionRaw, userRaw, onboardingRaw, mealsRaw, weeklyRaw, lastDateRaw] =
+        const [sessionRaw, userRaw, onboardingRaw, mealsRaw, weeklyRaw, lastDateRaw, classesRaw] =
           await Promise.all([
             AsyncStorage.getItem(STORAGE_KEYS.session),
             AsyncStorage.getItem(STORAGE_KEYS.user),
@@ -62,6 +64,7 @@ export function AppProvider({ children }) {
             AsyncStorage.getItem(STORAGE_KEYS.loggedMeals),
             AsyncStorage.getItem(STORAGE_KEYS.weeklyData),
             AsyncStorage.getItem(STORAGE_KEYS.lastLogDate),
+            AsyncStorage.getItem(STORAGE_KEYS.classes),
           ]);
 
         if (sessionRaw) {
@@ -69,23 +72,20 @@ export function AppProvider({ children }) {
           if (session.isLoggedIn) setIsLoggedIn(true);
         }
 
-        let loadedUser      = userRaw    ? JSON.parse(userRaw)    : { ...USER_PROFILE };
-        let loadedWeekly    = weeklyRaw  ? JSON.parse(weeklyRaw)  : {};
-        let loadedMeals     = mealsRaw   ? JSON.parse(mealsRaw)   : [];
-        const lastLogDate   = lastDateRaw || null;
-        const today         = todayISO();
+        let loadedUser    = userRaw    ? JSON.parse(userRaw)    : { ...USER_PROFILE };
+        let loadedWeekly  = weeklyRaw  ? JSON.parse(weeklyRaw)  : {};
+        let loadedMeals   = mealsRaw   ? JSON.parse(mealsRaw)   : [];
+        const lastLogDate = lastDateRaw || null;
+        const today       = todayISO();
 
-        // ── Daily rollover ──────────────────────────────────────────────────
+        // ── Daily rollover ────────────────────────────────────────────────
         if (lastLogDate && lastLogDate !== today) {
-          // Archive the previous day's totals into weeklyData
           loadedWeekly[lastLogDate] = {
             calories: loadedUser.currentCalories || 0,
             protein:  loadedUser.currentProtein  || 0,
             carbs:    loadedUser.currentCarbs    || 0,
             fat:      loadedUser.currentFat      || 0,
           };
-
-          // Increment or reset streak
           const hadMeals = (loadedWeekly[lastLogDate]?.calories || 0) > 0;
           loadedUser = {
             ...loadedUser,
@@ -96,7 +96,6 @@ export function AppProvider({ children }) {
             currentFat:      0,
           };
           loadedMeals = [];
-
           await Promise.all([
             AsyncStorage.setItem(STORAGE_KEYS.weeklyData, JSON.stringify(loadedWeekly)),
             AsyncStorage.setItem(STORAGE_KEYS.user, JSON.stringify(loadedUser)),
@@ -107,6 +106,7 @@ export function AppProvider({ children }) {
         await AsyncStorage.setItem(STORAGE_KEYS.lastLogDate, today);
 
         if (onboardingRaw) setOnboardingState(JSON.parse(onboardingRaw));
+        if (classesRaw)    setClasses(JSON.parse(classesRaw));
         setUserState(loadedUser);
         setLoggedMeals(loadedMeals);
         setWeeklyData(loadedWeekly);
@@ -118,7 +118,7 @@ export function AppProvider({ children }) {
     })();
   }, []);
 
-  // ── Persist user whenever it changes ─────────────────────────────────────
+  // ── Persist user ─────────────────────────────────────────────────────────
   const setUser = (updater) => {
     setUserState((prev) => {
       const next = typeof updater === 'function' ? updater(prev) : updater;
@@ -127,7 +127,7 @@ export function AppProvider({ children }) {
     });
   };
 
-  // ── Onboarding flag ──────────────────────────────────────────────────────
+  // ── Onboarding ───────────────────────────────────────────────────────────
   const setOnboardingComplete = async (val) => {
     setOnboardingState(val);
     try { await AsyncStorage.setItem(STORAGE_KEYS.onboarding, JSON.stringify(val)); } catch (e) {}
@@ -153,6 +153,7 @@ export function AppProvider({ children }) {
     setUserState({ ...USER_PROFILE });
     setLoggedMeals([]);
     setWeeklyData({});
+    setClasses([]);
   };
 
   // ── Meal logging ─────────────────────────────────────────────────────────
@@ -164,25 +165,27 @@ export function AppProvider({ children }) {
       const existingLog = prev.find(
         (l) => l.date === 'today' && l.mealPeriod === mealPeriod
       );
+      const newEntry = {
+        menuItemId: menuItem.id,
+        name:       menuItem.name,
+        calories:   menuItem.calories || 0,
+        protein:    menuItem.protein  || 0,
+        carbs:      menuItem.carbs    || 0,
+        fat:        menuItem.fat      || 0,
+        hallName,
+      };
       let next;
       if (existingLog) {
         next = prev.map((l) =>
           l.id === existingLog.id
-            ? {
-                ...l,
-                items: [...l.items, {
-                  menuItemId: menuItem.id, name: menuItem.name,
-                  calories: menuItem.calories, hallName,
-                }],
-                totalCalories: l.totalCalories + menuItem.calories,
-              }
+            ? { ...l, items: [...l.items, newEntry], totalCalories: l.totalCalories + newEntry.calories }
             : l
         );
       } else {
         next = [...prev, {
           id: `log${Date.now()}`, date: 'today', mealPeriod,
-          items: [{ menuItemId: menuItem.id, name: menuItem.name, calories: menuItem.calories, hallName }],
-          totalCalories: menuItem.calories,
+          items: [newEntry],
+          totalCalories: newEntry.calories,
         }];
       }
       AsyncStorage.setItem(STORAGE_KEYS.loggedMeals, JSON.stringify(next)).catch(() => {});
@@ -191,18 +194,64 @@ export function AppProvider({ children }) {
 
     setUser((prev) => ({
       ...prev,
-      currentCalories: (prev.currentCalories || 0) + menuItem.calories,
-      currentProtein:  (prev.currentProtein  || 0) + (menuItem.protein || 0),
-      currentCarbs:    (prev.currentCarbs    || 0) + (menuItem.carbs   || 0),
-      currentFat:      (prev.currentFat      || 0) + (menuItem.fat     || 0),
+      currentCalories: (prev.currentCalories || 0) + (menuItem.calories || 0),
+      currentProtein:  (prev.currentProtein  || 0) + (menuItem.protein  || 0),
+      currentCarbs:    (prev.currentCarbs    || 0) + (menuItem.carbs    || 0),
+      currentFat:      (prev.currentFat      || 0) + (menuItem.fat      || 0),
     }));
   };
 
-  // ── Swipe setter (user manually enters their balance) ────────────────────
+  // ── Remove a single item from a logged meal ───────────────────────────────
+  const removeMealItem = (logId, itemIndex) => {
+    setLoggedMeals((prev) => {
+      const log = prev.find((l) => l.id === logId);
+      if (!log) return prev;
+      const item = log.items[itemIndex];
+      if (!item) return prev;
+
+      setUser((u) => ({
+        ...u,
+        currentCalories: Math.max(0, (u.currentCalories || 0) - item.calories),
+        currentProtein:  Math.max(0, (u.currentProtein  || 0) - (item.protein || 0)),
+        currentCarbs:    Math.max(0, (u.currentCarbs    || 0) - (item.carbs   || 0)),
+        currentFat:      Math.max(0, (u.currentFat      || 0) - (item.fat     || 0)),
+      }));
+
+      const newItems = log.items.filter((_, i) => i !== itemIndex);
+      const next = newItems.length === 0
+        ? prev.filter((l) => l.id !== logId)
+        : prev.map((l) => l.id === logId
+            ? { ...l, items: newItems, totalCalories: Math.max(0, l.totalCalories - item.calories) }
+            : l
+          );
+      AsyncStorage.setItem(STORAGE_KEYS.loggedMeals, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
+
+  // ── Swipe balance ────────────────────────────────────────────────────────
   const setSwipes = (remaining) => {
     setUser((prev) => ({ ...prev, swipesRemaining: Math.max(0, remaining) }));
   };
 
+  // ── Class schedule ───────────────────────────────────────────────────────
+  const addClass = (cls) => {
+    setClasses((prev) => {
+      const next = [...prev, cls];
+      AsyncStorage.setItem(STORAGE_KEYS.classes, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
+
+  const removeClass = (id) => {
+    setClasses((prev) => {
+      const next = prev.filter((c) => c.id !== id);
+      AsyncStorage.setItem(STORAGE_KEYS.classes, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  };
+
+  // ── Menu filtering ────────────────────────────────────────────────────────
   const getFilteredMenuItems = (hallId) =>
     MENU_ITEMS.filter((item) => {
       if (hallId && item.hallId !== hallId) return false;
@@ -227,6 +276,7 @@ export function AppProvider({ children }) {
         setSwipes,
         loggedMeals,
         logMeal,
+        removeMealItem,
         diningHalls,
         activeFilters,
         toggleFilter,
@@ -234,6 +284,9 @@ export function AppProvider({ children }) {
         onboardingComplete,
         setOnboardingComplete,
         weeklyData,
+        classes,
+        addClass,
+        removeClass,
         usingLiveData: USE_LIVE_DATA,
         MEAL_PLAN_SWIPES,
       }}

@@ -32,6 +32,22 @@ export function todayISO() {
   return new Date().toISOString().split('T')[0];
 }
 
+// Convert "HH:MM" (24h) to minutes since midnight
+export function timeToMinutes(timeStr) {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+// Convert "HH:MM" (24h) to "H:MM AM/PM" for display
+export function fmt12(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hr = h % 12 || 12;
+  return `${hr}:${String(m || 0).padStart(2, '0')} ${period}`;
+}
+
 // Last N days as [{ dateStr, dayAbbr }], oldest first
 export function lastNDays(n = 7) {
   const days = [];

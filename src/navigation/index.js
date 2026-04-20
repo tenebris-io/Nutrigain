@@ -4,14 +4,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
+import { COLORS, FONTS, SIZES, SPACING, SHADOWS } from '../theme';
 
 import HomeScreen from '../screens/HomeScreen';
 import DiningScreen from '../screens/DiningScreen';
 import DiningDetailScreen from '../screens/DiningDetailScreen';
-import ChatbotScreen from '../screens/ChatbotScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ScheduleScreen from '../screens/ScheduleScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
 import LoginScreen from '../screens/LoginScreen';
 import { useApp } from '../context/AppContext';
@@ -34,6 +34,16 @@ function HomeStack() {
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="DiningDetail" component={DiningDetailScreen} />
+      <Stack.Screen name="Schedule" component={ScheduleScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function ProfileStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+      <Stack.Screen name="Schedule" component={ScheduleScreen} />
     </Stack.Navigator>
   );
 }
@@ -71,16 +81,6 @@ function MainTabs() {
         }}
       />
       <Tab.Screen
-        name="ChatTab"
-        component={ChatbotScreen}
-        options={{
-          tabBarLabel: 'AI Chat',
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons name={focused ? 'sparkles' : 'sparkles-outline'} size={24} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen
         name="DashboardTab"
         component={DashboardScreen}
         options={{
@@ -92,7 +92,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="ProfileTab"
-        component={ProfileScreen}
+        component={ProfileStack}
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ focused, color }) => (
@@ -144,10 +144,8 @@ export default function Navigation() {
 
 const styles = StyleSheet.create({
   splash: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    alignItems: 'center',
-    justifyContent: 'center',
+    flex: 1, backgroundColor: COLORS.background,
+    alignItems: 'center', justifyContent: 'center',
   },
   tabBar: {
     backgroundColor: COLORS.surface,
@@ -158,12 +156,6 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     ...SHADOWS.subtle,
   },
-  label: {
-    fontFamily: FONTS.medium,
-    fontSize: 10,
-    marginTop: 2,
-  },
-  tabItem: {
-    paddingTop: 2,
-  },
+  label:   { fontFamily: FONTS.medium, fontSize: 10, marginTop: 2 },
+  tabItem: { paddingTop: 2 },
 });
