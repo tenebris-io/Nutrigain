@@ -27,7 +27,11 @@ const VALID_CREDENTIALS = { 'max.1282': 'buckeye123' };
 
 const MEAL_PLAN_SWIPES = { 'Grey 10': 10, 'Scarlet 14': 14, 'Buckeye Unlimited': 999 };
 
+// Bump this when stored data needs a one-time migration on next boot
+const CURRENT_SCHEMA = 2;
+
 const STORAGE_KEYS = {
+  schema:      '@nutrigain/schema',
   session:     '@nutrigain/session',
   user:        '@nutrigain/user',
   onboarding:  '@nutrigain/onboardingComplete',
@@ -56,8 +60,9 @@ export function AppProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        const [sessionRaw, userRaw, onboardingRaw, mealsRaw, weeklyRaw, lastDateRaw, classesRaw] =
+        const [schemaRaw, sessionRaw, userRaw, onboardingRaw, mealsRaw, weeklyRaw, lastDateRaw, classesRaw] =
           await Promise.all([
+            AsyncStorage.getItem(STORAGE_KEYS.schema),
             AsyncStorage.getItem(STORAGE_KEYS.session),
             AsyncStorage.getItem(STORAGE_KEYS.user),
             AsyncStorage.getItem(STORAGE_KEYS.onboarding),
@@ -77,6 +82,27 @@ export function AppProvider({ children }) {
         let loadedMeals   = mealsRaw   ? JSON.parse(mealsRaw)   : [];
         const lastLogDate = lastDateRaw || null;
         const today       = todayISO();
+        const storedSchema = schemaRaw ? parseInt(schemaRaw, 10) : 0;
+
+        // ── Schema migration ──────────────────────────────────────────────
+        // v0/v1 → v2: wipe stale mock daily totals and streak that were
+        // persisted before these fields were zeroed out in mockData.js
+        if (storedSchema < CURRENT_SCHEMA) {
+          loadedUser = {
+            ...loadedUser,
+            currentCalories: 0,
+            currentProtein:  0,
+            currentCarbs:    0,
+            currentFat:      0,
+            streak:          0,
+          };
+          loadedMeals = [];
+          await Promise.all([
+            AsyncStorage.setItem(STORAGE_KEYS.schema, String(CURRENT_SCHEMA)),
+            AsyncStorage.setItem(STORAGE_KEYS.user, JSON.stringify(loadedUser)),
+            AsyncStorage.setItem(STORAGE_KEYS.loggedMeals, JSON.stringify([])),
+          ]);
+        }
 
         // ── Daily rollover ────────────────────────────────────────────────
         if (lastLogDate && lastLogDate !== today) {
