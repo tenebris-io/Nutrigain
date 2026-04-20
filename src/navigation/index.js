@@ -10,6 +10,7 @@ import HomeScreen from '../screens/HomeScreen';
 import DiningScreen from '../screens/DiningScreen';
 import DiningDetailScreen from '../screens/DiningDetailScreen';
 import DashboardScreen from '../screens/DashboardScreen';
+import ChatbotScreen from '../screens/ChatbotScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ScheduleScreen from '../screens/ScheduleScreen';
 import OnboardingScreen from '../screens/OnboardingScreen';
@@ -77,6 +78,16 @@ function MainTabs() {
           tabBarLabel: 'Dining',
           tabBarIcon: ({ focused, color }) => (
             <Ionicons name={focused ? 'restaurant' : 'restaurant-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="ChatTab"
+        component={ChatbotScreen}
+        options={{
+          tabBarLabel: 'AI Chat',
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons name={focused ? 'sparkles' : 'sparkles-outline'} size={24} color={color} />
           ),
         }}
       />
