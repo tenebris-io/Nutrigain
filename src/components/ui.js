@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginBottom: SPACING.sm,
     marginTop: SPACING.xl,
-    paddingHorizontal: 0,
+    paddingHorizontal: SPACING.lg,
   },
   sectionTitle: {
     fontFamily: FONTS.semiBold,

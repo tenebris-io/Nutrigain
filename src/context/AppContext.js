@@ -80,16 +80,29 @@ export function AppProvider({ children }) {
 
         // ── Daily rollover ────────────────────────────────────────────────
         if (lastLogDate && lastLogDate !== today) {
+          // Archive the last active day's totals
           loadedWeekly[lastLogDate] = {
             calories: loadedUser.currentCalories || 0,
             protein:  loadedUser.currentProtein  || 0,
             carbs:    loadedUser.currentCarbs    || 0,
             fat:      loadedUser.currentFat      || 0,
           };
-          const hadMeals = (loadedWeekly[lastLogDate]?.calories || 0) > 0;
+
+          // How many calendar days have passed since we last opened the app?
+          const daysDiff = Math.round(
+            (new Date(today) - new Date(lastLogDate)) / (1000 * 60 * 60 * 24)
+          );
+
+          // Streak continues only if exactly 1 day passed AND user logged yesterday
+          const loggedYesterday = (loadedWeekly[lastLogDate]?.calories || 0) > 0;
+          const newStreak =
+            daysDiff === 1 && loggedYesterday
+              ? (loadedUser.streak || 0) + 1
+              : 0;
+
           loadedUser = {
             ...loadedUser,
-            streak:          hadMeals ? (loadedUser.streak || 0) + 1 : 0,
+            streak:          newStreak,
             currentCalories: 0,
             currentProtein:  0,
             currentCarbs:    0,
