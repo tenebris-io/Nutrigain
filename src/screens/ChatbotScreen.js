@@ -7,12 +7,7 @@ import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
 import { CHATBOT_SUGGESTIONS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 
-// API key is loaded from .env (EXPO_PUBLIC_ANTHROPIC_API_KEY) — never hard-code it here
 const ANTHROPIC_API_KEY = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
-
-// ---------------------------------------------------------------------------
-// Build a system prompt from whatever menu data is currently loaded
-// ---------------------------------------------------------------------------
 
 function buildSystemPrompt(user, diningHalls, getFilteredMenuItems) {
   const STATUS_LABEL = {
@@ -52,7 +47,7 @@ function buildSystemPrompt(user, diningHalls, getFilteredMenuItems) {
     ? `The student's dietary restrictions are: ${user.dietaryRestrictions.join(', ')}. Always respect these.`
     : 'The student has no dietary restrictions on file.';
 
-  return `You are Nutrigain's AI dining assistant for Ohio State University students. \
+  return `You are Graze's AI dining assistant for Ohio State University students. \
 You help students find meals, understand nutrition, and navigate campus dining.
 
 ${userRestrictions}
@@ -69,8 +64,6 @@ Guidelines:
 - If you don't have data for something, say so honestly.
 - For severe allergies, always recommend speaking with a dining hall manager.`;
 }
-
-// ---------------------------------------------------------------------------
 
 export default function ChatbotScreen() {
   const { user, diningHalls, getFilteredMenuItems } = useApp();
@@ -106,7 +99,6 @@ export default function ChatbotScreen() {
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
 
-    // Guard: catch placeholder key before making a doomed network call
     if (!ANTHROPIC_API_KEY || ANTHROPIC_API_KEY === 'YOUR_API_KEY_HERE') {
       setMessages((prev) => [...prev, {
         id: `err-${Date.now()}`, role: 'assistant', error: true,
@@ -139,7 +131,6 @@ export default function ChatbotScreen() {
       const data = await response.json();
 
       if (!response.ok) {
-        // Surface the real API error (401 bad key, 429 rate limit, etc.)
         const apiMsg = data?.error?.message || `API error ${response.status}`;
         throw new Error(apiMsg);
       }
@@ -177,7 +168,7 @@ export default function ChatbotScreen() {
         <View style={styles.header}>
           <View style={styles.headerInner}>
             <View style={styles.headerIcon}>
-              <Text style={styles.headerIconText}>N</Text>
+              <Text style={styles.headerIconText}>G</Text>
             </View>
             <View style={styles.headerInfo}>
               <Text style={styles.headerTitle}>AI Dining Assistant</Text>
@@ -203,7 +194,7 @@ export default function ChatbotScreen() {
             >
               {msg.role === 'assistant' && (
                 <View style={styles.botAvatar}>
-                  <Text style={styles.botAvatarText}>N</Text>
+                  <Text style={styles.botAvatarText}>G</Text>
                 </View>
               )}
               <View
@@ -224,7 +215,7 @@ export default function ChatbotScreen() {
           {loading && (
             <View style={[styles.msgRow, styles.msgRowBot]}>
               <View style={styles.botAvatar}>
-                <Text style={styles.botAvatarText}>N</Text>
+                <Text style={styles.botAvatarText}>G</Text>
               </View>
               <View style={[styles.bubbleInner, styles.bubbleInnerBot, styles.typingBubble]}>
                 <ActivityIndicator size="small" color={COLORS.primary} />
@@ -232,7 +223,7 @@ export default function ChatbotScreen() {
             </View>
           )}
 
-          {/* Suggestion chips — always visible for quick prompts */}
+          {/* Suggestion chips */}
           {!loading && (
             <View style={styles.chips}>
               {CHATBOT_SUGGESTIONS.map((s) => (
@@ -254,7 +245,7 @@ export default function ChatbotScreen() {
           <TextInput
             style={styles.input}
             placeholder="Ask about menus, nutrition, wait times..."
-            placeholderTextColor={COLORS.textSecondary}
+            placeholderTextColor={COLORS.textPlaceholder}
             value={input}
             onChangeText={setInput}
             multiline
@@ -278,28 +269,30 @@ export default function ChatbotScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.primary },
-  flex: { flex: 1, backgroundColor: COLORS.background },
+  safe: { flex: 1, backgroundColor: COLORS.primaryDeep },
+  flex: { flex: 1, backgroundColor: COLORS.base },
 
   header: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryDeep,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.lg,
     paddingHorizontal: SPACING.lg,
+    borderBottomLeftRadius: RADIUS.xl,
+    borderBottomRightRadius: RADIUS.xl,
   },
   headerInner:     { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   headerIcon:      {
     width: 40, height: 40, borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: COLORS.amber,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)',
+    ...SHADOWS.raised_sm,
   },
-  headerIconText:  { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.surface },
+  headerIconText:  { ...FONTS.bold, fontSize: SIZES.md, color: COLORS.primaryDeep },
   headerInfo:      { flex: 1 },
-  headerTitle:     { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.surface },
+  headerTitle:     { ...FONTS.bold, fontSize: SIZES.md, color: COLORS.amberLight },
   headerStatusRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: 2 },
   onlineDot:       { width: 6, height: 6, borderRadius: RADIUS.full, backgroundColor: '#4CD964' },
-  headerSub:       { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: 'rgba(255,255,255,0.75)' },
+  headerSub:       { ...FONTS.regular, fontSize: SIZES.xs, color: 'rgba(255,255,255,0.75)' },
 
   messages:        { flex: 1 },
   messagesContent: { padding: SPACING.lg, gap: SPACING.md },
@@ -313,48 +306,53 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 2, flexShrink: 0,
+    ...SHADOWS.raised_sm,
   },
-  botAvatarText:   { fontFamily: FONTS.bold, fontSize: SIZES.sm, color: COLORS.surface },
+  botAvatarText:   { ...FONTS.bold, fontSize: SIZES.sm, color: COLORS.baseLight },
 
-  bubbleInner:     { maxWidth: '78%', borderRadius: RADIUS.md, padding: SPACING.md },
-  bubbleInnerBot:  { backgroundColor: COLORS.surface, ...SHADOWS.subtle },
+  bubbleInner:     { maxWidth: '78%', borderRadius: RADIUS.lg, padding: SPACING.md },
+  bubbleInnerBot:  { backgroundColor: COLORS.base, ...SHADOWS.subtle },
   bubbleInnerUser: { backgroundColor: COLORS.primary },
   bubbleError:     { backgroundColor: '#fff0f0', borderWidth: 1, borderColor: '#ffd0d0' },
   typingBubble:    { paddingVertical: SPACING.md, paddingHorizontal: SPACING.lg },
-  bubbleText:      { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textPrimary, lineHeight: 21 },
-  bubbleTextUser:  { color: COLORS.surface },
+  bubbleText:      { ...FONTS.regular, fontSize: SIZES.sm, color: COLORS.textPrimary, lineHeight: 21 },
+  bubbleTextUser:  { color: COLORS.baseLight },
 
   chips:    {
     flexDirection: 'row', flexWrap: 'wrap',
     gap: SPACING.sm, marginTop: SPACING.xs, paddingLeft: 38,
   },
   chip: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.base,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs,
-    borderWidth: 1, borderColor: COLORS.border,
+    ...SHADOWS.raised_sm,
   },
-  chipText: { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.primary },
+  chipText: { ...FONTS.medium, fontSize: SIZES.sm, color: COLORS.primary },
 
   inputRow: {
     flexDirection: 'row', alignItems: 'flex-end', gap: SPACING.sm,
     padding: SPACING.md,
-    backgroundColor: COLORS.surface,
-    borderTopWidth: 0.5, borderTopColor: COLORS.border,
+    backgroundColor: COLORS.base,
+    borderTopWidth: 0.5, borderTopColor: 'rgba(163,170,155,0.40)',
   },
   input: {
     flex: 1, minHeight: 42, maxHeight: 120,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.inputBg,
+    borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
-    borderWidth: 1, borderColor: COLORS.border,
-    fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textPrimary,
+    borderTopWidth: 1, borderLeftWidth: 1,
+    borderTopColor: 'rgba(163,170,155,0.55)', borderLeftColor: 'rgba(163,170,155,0.55)',
+    borderBottomWidth: 1, borderRightWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.65)', borderRightColor: 'rgba(255,255,255,0.65)',
+    ...FONTS.regular, fontSize: SIZES.sm, color: COLORS.textPrimary,
   },
   sendBtn:         {
     width: 42, height: 42, borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.amber,
     alignItems: 'center', justifyContent: 'center',
+    ...SHADOWS.raised_sm,
   },
-  sendBtnDisabled: { backgroundColor: COLORS.border },
-  sendIcon:        { fontFamily: FONTS.bold, fontSize: SIZES.lg, color: COLORS.surface },
+  sendBtnDisabled: { backgroundColor: COLORS.inputBg },
+  sendIcon:        { ...FONTS.bold, fontSize: SIZES.lg, color: COLORS.primaryDeep },
 });

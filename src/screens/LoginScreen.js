@@ -35,14 +35,14 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* OSU header */}
+        {/* Header */}
         <View style={styles.header}>
           <View style={styles.logo}>
-            <Text style={styles.logoText}>N</Text>
+            <Text style={styles.logoText}>G</Text>
           </View>
           <Text style={styles.school}>THE OHIO STATE UNIVERSITY</Text>
-          <Text style={styles.appName}>Nutrigain</Text>
-          <Text style={styles.tagline}>Campus dining, tracked.</Text>
+          <Text style={styles.appName}>Graze</Text>
+          <Text style={styles.tagline}>Campus dining, naturally.</Text>
         </View>
 
         {/* Login card */}
@@ -54,7 +54,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="e.g. max.1282"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.textPlaceholder}
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -68,7 +68,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor={COLORS.textSecondary}
+              placeholderTextColor={COLORS.textPlaceholder}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -86,7 +86,7 @@ export default function LoginScreen() {
             activeOpacity={0.82}
           >
             {loading
-              ? <ActivityIndicator color={COLORS.surface} size="small" />
+              ? <ActivityIndicator color={COLORS.primaryDeep} size="small" />
               : <Text style={styles.loginBtnText}>Sign In</Text>
             }
           </TouchableOpacity>
@@ -101,7 +101,7 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: COLORS.background },
+  flex: { flex: 1, backgroundColor: COLORS.base },
   container: {
     flexGrow: 1,
     paddingHorizontal: SPACING.lg,
@@ -111,98 +111,113 @@ const styles = StyleSheet.create({
 
   header: { alignItems: 'center', marginBottom: SPACING.xxxl },
   logo: {
-    width: 72,
-    height: 72,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary,
+    width: 76,
+    height: 76,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primaryDeep,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.md,
+    ...SHADOWS.medium,
+    shadowColor: '#1e4d2b',
+    shadowOpacity: 0.45,
+    borderTopColor: 'rgba(120,200,140,0.30)',
+    borderLeftColor: 'rgba(120,200,140,0.30)',
   },
-  logoText: { fontFamily: FONTS.bold, fontSize: 36, color: COLORS.surface },
+  logoText: { ...FONTS.bold, fontSize: 38, color: COLORS.amberLight },
   school: {
-    fontFamily: FONTS.semiBold,
+    ...FONTS.medium,
     fontSize: SIZES.xs,
     color: COLORS.sectionLabel,
     letterSpacing: 0.8,
     marginBottom: SPACING.xs,
   },
   appName: {
-    fontFamily: FONTS.bold,
+    ...FONTS.bold,
     fontSize: SIZES.xxxl,
     color: COLORS.textPrimary,
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   tagline: {
-    fontFamily: FONTS.regular,
+    ...FONTS.regular,
     fontSize: SIZES.sm,
     color: COLORS.textSecondary,
     marginTop: 2,
   },
 
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.base,
+    borderRadius: RADIUS.xl,
     padding: SPACING.xl,
     ...SHADOWS.subtle,
   },
   cardTitle: {
-    fontFamily: FONTS.bold,
+    ...FONTS.bold,
     fontSize: SIZES.xl,
     color: COLORS.textPrimary,
-    letterSpacing: -0.5,
     marginBottom: SPACING.xl,
   },
 
   fieldGroup: { marginBottom: SPACING.lg },
   fieldLabel: {
-    fontFamily: FONTS.semiBold,
+    ...FONTS.medium,
     fontSize: SIZES.xs,
     color: COLORS.sectionLabel,
     letterSpacing: 0.5,
     marginBottom: SPACING.xs,
   },
   input: {
-    height: 48,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.sm,
+    height: 50,
+    backgroundColor: COLORS.inputBg,
+    borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    fontFamily: FONTS.regular,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderTopColor: 'rgba(163,170,155,0.55)',
+    borderLeftColor: 'rgba(163,170,155,0.55)',
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.65)',
+    borderRightColor: 'rgba(255,255,255,0.65)',
+    ...FONTS.regular,
     fontSize: SIZES.md,
     color: COLORS.textPrimary,
   },
 
   error: {
-    fontFamily: FONTS.regular,
+    ...FONTS.regular,
     fontSize: SIZES.sm,
-    color: COLORS.error || '#BB0000',
+    color: COLORS.error,
     marginBottom: SPACING.md,
   },
 
   loginBtn: {
-    height: 50,
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.sm,
+    height: 52,
+    backgroundColor: COLORS.amber,
+    borderRadius: RADIUS.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: SPACING.sm,
+    ...SHADOWS.subtle,
+    shadowColor: '#a06414',
+    shadowOpacity: 0.45,
+    borderTopColor: 'rgba(255,230,140,0.60)',
+    borderLeftColor: 'rgba(255,230,140,0.60)',
   },
   loginBtnDisabled: { opacity: 0.55 },
   loginBtnText: {
-    fontFamily: FONTS.bold,
+    ...FONTS.bold,
     fontSize: SIZES.md,
-    color: COLORS.surface,
-    letterSpacing: -0.2,
+    color: COLORS.primaryDeep,
+    letterSpacing: 0.3,
   },
 
   hint: {
     textAlign: 'center',
-    fontFamily: FONTS.regular,
+    ...FONTS.regular,
     fontSize: SIZES.xs,
     color: COLORS.textSecondary,
     marginTop: SPACING.xl,
   },
-  hintBold: { fontFamily: FONTS.semiBold, color: COLORS.textPrimary },
+  hintBold: { ...FONTS.semiBold, color: COLORS.textPrimary },
 });

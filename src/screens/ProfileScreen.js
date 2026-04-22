@@ -52,9 +52,9 @@ export default function ProfileScreen({ navigation }) {
       {/* ── Hero ─────────────────────────────────────────────────── */}
       <View style={styles.hero}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{(user.name || 'S')[0].toUpperCase()}</Text>
+          <Text style={styles.avatarText}>{(user.name || 'G')[0].toUpperCase()}</Text>
         </View>
-        <Text style={styles.heroName}>{user.name}</Text>
+        <Text style={styles.heroName}>{user.name || 'Your Name'}</Text>
         <Text style={styles.heroSub}>{user.year} · {user.major}</Text>
         {user.dietaryRestrictions.length > 0 && (
           <View style={styles.heroBadges}>
@@ -65,7 +65,7 @@ export default function ProfileScreen({ navigation }) {
         )}
       </View>
 
-      {/* ── Stats row (OSU-style) ─────────────────────────────────── */}
+      {/* ── Stats row ─────────────────────────────────────────────── */}
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statNum}>{user.streak}</Text>
@@ -83,26 +83,26 @@ export default function ProfileScreen({ navigation }) {
         </View>
       </View>
 
-      {/* ── Meal plan card ────────────────────────────────────────── */}
+      {/* ── Meal plan ────────────────────────────────────────────── */}
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>MEAL PLAN</Text>
         <View style={styles.card}>
           <View style={styles.mealPlanRow}>
             <Text style={styles.mealPlanTitle}>{user.mealPlan}</Text>
             <View style={[styles.swipePill, {
-              backgroundColor: user.swipesRemaining <= 3 ? COLORS.redLight : COLORS.greenLight,
+              backgroundColor: user.swipesRemaining <= 3 ? COLORS.redLight : COLORS.primaryLight,
             }]}>
               <Text style={[styles.swipePillText, {
-                color: user.swipesRemaining <= 3 ? COLORS.error : COLORS.success,
+                color: user.swipesRemaining <= 3 ? COLORS.error : COLORS.primary,
               }]}>
                 {user.swipesRemaining} swipes
               </Text>
             </View>
           </View>
-          <View style={styles.swipeBar}>
+          <View style={styles.swipeBarTrack}>
             <View style={[styles.swipeFill, {
               width: `${(user.swipesRemaining / user.totalSwipes) * 100}%`,
-              backgroundColor: user.swipesRemaining <= 3 ? COLORS.error : COLORS.success,
+              backgroundColor: user.swipesRemaining <= 3 ? COLORS.error : COLORS.primary,
             }]} />
           </View>
           <Text style={styles.swipeSub}>{user.swipesRemaining} of {user.totalSwipes} remaining this week</Text>
@@ -122,14 +122,14 @@ export default function ProfileScreen({ navigation }) {
           {editing ? (
             <>
               {[
-                { label: 'Name',                  key: 'name',            keyboard: 'default' },
-                { label: 'Major',                 key: 'major',           keyboard: 'default' },
-                { label: 'Year',                  key: 'year',            keyboard: 'default' },
-                { label: 'Daily Calorie Goal',    key: 'calorieGoal',     keyboard: 'numeric' },
-                { label: 'Daily Protein Goal (g)', key: 'proteinGoal',    keyboard: 'numeric' },
-                { label: 'Daily Carb Goal (g)',   key: 'carbGoal',        keyboard: 'numeric' },
-                { label: 'Daily Fat Goal (g)',    key: 'fatGoal',         keyboard: 'numeric' },
-                { label: 'Swipes Remaining',      key: 'swipesRemaining', keyboard: 'numeric' },
+                { label: 'Name',                   key: 'name',            keyboard: 'default' },
+                { label: 'Major',                  key: 'major',           keyboard: 'default' },
+                { label: 'Year',                   key: 'year',            keyboard: 'default' },
+                { label: 'Daily Calorie Goal',     key: 'calorieGoal',     keyboard: 'numeric' },
+                { label: 'Daily Protein Goal (g)', key: 'proteinGoal',     keyboard: 'numeric' },
+                { label: 'Daily Carb Goal (g)',    key: 'carbGoal',        keyboard: 'numeric' },
+                { label: 'Daily Fat Goal (g)',     key: 'fatGoal',         keyboard: 'numeric' },
+                { label: 'Swipes Remaining',       key: 'swipesRemaining', keyboard: 'numeric' },
               ].map(({ label, key, keyboard }, i, arr) => (
                 <React.Fragment key={key}>
                   <View style={styles.formGroup}>
@@ -224,8 +224,8 @@ export default function ProfileScreen({ navigation }) {
             <Switch
               value={smartAlerts}
               onValueChange={setSmartAlerts}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.surface}
+              trackColor={{ false: COLORS.inputBg, true: COLORS.primary }}
+              thumbColor={COLORS.baseLight}
             />
           </View>
           <Divider />
@@ -237,8 +237,8 @@ export default function ProfileScreen({ navigation }) {
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: COLORS.border, true: COLORS.primary }}
-              thumbColor={COLORS.surface}
+              trackColor={{ false: COLORS.inputBg, true: COLORS.primary }}
+              thumbColor={COLORS.baseLight}
             />
           </View>
         </View>
@@ -248,8 +248,8 @@ export default function ProfileScreen({ navigation }) {
       <View style={styles.section}>
         <Text style={styles.sectionLabel}>ABOUT</Text>
         <View style={[styles.card, styles.aboutCard]}>
-          <Text style={styles.aboutLogo}>Nutrigain</Text>
-          <Text style={styles.aboutTagline}>Your AI Campus Dining Companion</Text>
+          <Text style={styles.aboutLogo}>Graze</Text>
+          <Text style={styles.aboutTagline}>Your Campus Dining Companion</Text>
           <Text style={styles.aboutVersion}>Version 1.0.0 · OSU Pilot</Text>
           <Text style={styles.aboutTeam}>Made with ❤️ by Rishi, Varsha, Landry, Sujay</Text>
           <Text style={styles.aboutSchool}>The Ohio State University · Spring 2026</Text>
@@ -262,42 +262,46 @@ export default function ProfileScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1, backgroundColor: COLORS.base },
   content: { paddingBottom: SPACING.xxxl },
 
   hero: {
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryDeep,
     paddingTop: SPACING.xxxl,
     paddingBottom: SPACING.xl,
+    borderBottomLeftRadius: RADIUS.xl,
+    borderBottomRightRadius: RADIUS.xl,
   },
   avatar: {
-    width: 80,
-    height: 80,
+    width: 84,
+    height: 84,
     borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: 'rgba(245,166,35,0.25)',
     borderWidth: 2.5,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: 'rgba(245,166,35,0.50)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.md,
   },
-  avatarText: { fontFamily: FONTS.bold, fontSize: SIZES.xxl, color: COLORS.surface },
-  heroName: { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.surface, letterSpacing: -0.4 },
-  heroSub: { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: 'rgba(255,255,255,0.75)', marginTop: 2, marginBottom: SPACING.sm },
+  avatarText: { ...FONTS.bold, fontSize: SIZES.xxl, color: COLORS.amberLight },
+  heroName: { ...FONTS.bold, fontSize: SIZES.xl, color: COLORS.baseLight, letterSpacing: -0.3 },
+  heroSub: { ...FONTS.regular, fontSize: SIZES.sm, color: 'rgba(255,255,255,0.65)', marginTop: 2, marginBottom: SPACING.sm },
   heroBadges: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.xs },
 
-  // Stats
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 0.5,
-    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.base,
+    marginHorizontal: SPACING.lg,
+    marginTop: -1,
+    borderRadius: RADIUS.lg,
+    ...SHADOWS.subtle,
+    overflow: 'hidden',
   },
   statItem: { flex: 1, alignItems: 'center', paddingVertical: SPACING.lg },
-  statDivider: { width: 0.5, backgroundColor: COLORS.border, marginVertical: SPACING.sm },
-  statNum: { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.primary, letterSpacing: -0.5 },
-  statLabel: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  statDivider: { width: 1, backgroundColor: 'rgba(163,170,155,0.30)', marginVertical: SPACING.sm },
+  statNum: { ...FONTS.bold, fontSize: SIZES.xl, color: COLORS.amber, letterSpacing: -0.5 },
+  statLabel: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
 
   section: { padding: SPACING.lg, paddingBottom: 0 },
   sectionHeaderRow: {
@@ -307,87 +311,90 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   sectionLabel: {
-    fontFamily: FONTS.semiBold,
+    ...FONTS.medium,
     fontSize: SIZES.xs,
     color: COLORS.sectionLabel,
-    letterSpacing: 0.6,
+    letterSpacing: 0.8,
     marginBottom: SPACING.sm,
   },
   sectionSub: {
-    fontFamily: FONTS.regular,
+    ...FONTS.regular,
     fontSize: SIZES.xs,
     color: COLORS.textSecondary,
     marginBottom: SPACING.md,
     marginTop: -4,
   },
-  editBtn: { fontFamily: FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.primary },
+  editBtn: { ...FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.primary },
 
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.base,
+    borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     ...SHADOWS.subtle,
   },
 
-  // Meal plan
   mealPlanRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
-  mealPlanTitle: { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary },
+  mealPlanTitle: { ...FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary },
   swipePill: { paddingHorizontal: SPACING.md, paddingVertical: 4, borderRadius: RADIUS.full },
-  swipePillText: { fontFamily: FONTS.bold, fontSize: SIZES.xs },
-  swipeBar: { height: 6, backgroundColor: COLORS.border, borderRadius: RADIUS.full, overflow: 'hidden', marginBottom: SPACING.xs },
+  swipePillText: { ...FONTS.bold, fontSize: SIZES.xs },
+  swipeBarTrack: {
+    height: 7, backgroundColor: COLORS.inputBg, borderRadius: RADIUS.full, overflow: 'hidden', marginBottom: SPACING.xs,
+    borderTopWidth: 0.5, borderLeftWidth: 0.5,
+    borderTopColor: 'rgba(163,170,155,0.50)', borderLeftColor: 'rgba(163,170,155,0.50)',
+  },
   swipeFill: { height: '100%', borderRadius: RADIUS.full },
-  swipeSub: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
+  swipeSub: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
 
-  // Form
   formGroup: { marginBottom: SPACING.xs },
-  formLabel: { fontFamily: FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary, marginBottom: 4 },
+  formLabel: { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary, marginBottom: 4 },
   formInput: {
-    height: 40,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.sm,
+    height: 44,
+    backgroundColor: COLORS.inputBg,
+    borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    fontFamily: FONTS.regular,
+    borderTopWidth: 1, borderLeftWidth: 1,
+    borderTopColor: 'rgba(163,170,155,0.55)', borderLeftColor: 'rgba(163,170,155,0.55)',
+    borderBottomWidth: 1, borderRightWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.65)', borderRightColor: 'rgba(255,255,255,0.65)',
+    ...FONTS.regular,
     fontSize: SIZES.sm,
     color: COLORS.textPrimary,
   },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: SPACING.xs },
-  infoLabel: { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
-  infoValue: { fontFamily: FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.textPrimary },
+  infoLabel: { ...FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
+  infoValue: { ...FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.textPrimary },
 
-  // Diet chips
   dietGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
   dietChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full, ...SHADOWS.raised_sm,
+    backgroundColor: COLORS.base,
   },
-  dietChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  dietChipText: { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
-  dietChipTextActive: { color: COLORS.surface },
+  dietChipActive: {
+    backgroundColor: COLORS.primary,
+    shadowColor: '#1e4d2b',
+    shadowOpacity: 0.40,
+    borderTopColor: 'rgba(120,200,140,0.35)',
+    borderLeftColor: 'rgba(120,200,140,0.35)',
+  },
+  dietChipText: { ...FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
+  dietChipTextActive: { color: COLORS.baseLight },
 
-  // Settings
   settingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.md },
   settingInfo: { flex: 1 },
-  settingLabel: { fontFamily: FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.textPrimary },
-  settingDesc: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  settingLabel: { ...FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.textPrimary },
+  settingDesc: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
 
-  // Schedule
   scheduleRow:    { flexDirection: 'row', alignItems: 'center' },
   scheduleInfo:   { flex: 1 },
-  scheduleTitle:  { fontFamily: FONTS.semiBold, fontSize: SIZES.md, color: COLORS.textPrimary },
-  scheduleSub:    { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
-  scheduleChevron: { fontSize: 22, color: COLORS.border, fontFamily: FONTS.regular },
+  scheduleTitle:  { ...FONTS.semiBold, fontSize: SIZES.md, color: COLORS.textPrimary },
+  scheduleSub:    { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  scheduleChevron: { fontSize: 22, color: COLORS.chevron },
 
-  // About
   aboutCard: { alignItems: 'center', gap: 4 },
-  aboutLogo: { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.primary },
-  aboutTagline: { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary },
-  aboutVersion: { fontFamily: FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: SPACING.xs },
-  aboutTeam: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
-  aboutSchool: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
+  aboutLogo: { ...FONTS.bold, fontSize: SIZES.xl, color: COLORS.primary },
+  aboutTagline: { ...FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary },
+  aboutVersion: { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: SPACING.xs },
+  aboutTeam: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
+  aboutSchool: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
 });

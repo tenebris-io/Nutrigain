@@ -48,11 +48,11 @@ export default function OnboardingScreen() {
     <View style={styles.slide} key="welcome">
       <View style={styles.welcomeHeader}>
         <View style={styles.welcomeLogo}>
-          <Text style={styles.welcomeLogoText}>N</Text>
+          <Text style={styles.welcomeLogoText}>G</Text>
         </View>
         <Text style={styles.welcomeSchool}>THE OHIO STATE UNIVERSITY</Text>
       </View>
-      <Text style={styles.welcomeHeadline}>Welcome to{'\n'}Nutrigain.</Text>
+      <Text style={styles.welcomeHeadline}>Welcome to{'\n'}Graze.</Text>
       <Text style={styles.welcomeSub}>
         Your AI-powered campus dining companion. Make every meal count — without the guesswork.
       </Text>
@@ -85,7 +85,7 @@ export default function OnboardingScreen() {
           <TextInput
             style={styles.input}
             placeholder="e.g. Alex"
-            placeholderTextColor={COLORS.border}
+            placeholderTextColor={COLORS.textPlaceholder}
             value={name}
             onChangeText={setName}
           />
@@ -95,7 +95,7 @@ export default function OnboardingScreen() {
           <TextInput
             style={styles.input}
             placeholder="e.g. Public Health"
-            placeholderTextColor={COLORS.border}
+            placeholderTextColor={COLORS.textPlaceholder}
             value={major}
             onChangeText={setMajor}
           />
@@ -172,7 +172,7 @@ export default function OnboardingScreen() {
           <TextInput
             style={styles.input}
             placeholder="2000"
-            placeholderTextColor={COLORS.border}
+            placeholderTextColor={COLORS.textPlaceholder}
             keyboardType="numeric"
             value={calorieGoal}
             onChangeText={setCalorieGoal}
@@ -224,55 +224,58 @@ export default function OnboardingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1, backgroundColor: COLORS.base },
   scroll: { flexGrow: 1, padding: SPACING.lg },
 
-  // Progress bar
   progressWrap: {
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xxxl,
     paddingBottom: SPACING.md,
-    backgroundColor: COLORS.surface,
-    borderBottomWidth: 0.5,
-    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.base,
   },
   progressTrack: {
     height: 4,
-    backgroundColor: COLORS.border,
+    backgroundColor: COLORS.inputBg,
     borderRadius: RADIUS.full,
     overflow: 'hidden',
+    borderTopWidth: 1, borderLeftWidth: 1,
+    borderTopColor: 'rgba(163,170,155,0.50)', borderLeftColor: 'rgba(163,170,155,0.50)',
   },
   progressFill: { height: '100%', backgroundColor: COLORS.primary, borderRadius: RADIUS.full },
 
   slide: { flex: 1, paddingTop: SPACING.xl },
 
-  // Welcome
   welcomeHeader: { alignItems: 'center', marginBottom: SPACING.xxl },
   welcomeLogo: {
-    width: 64,
-    height: 64,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary,
+    width: 76,
+    height: 76,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primaryDeep,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.md,
+    ...SHADOWS.subtle,
+    shadowColor: '#1e4d2b',
+    shadowOpacity: 0.45,
+    borderTopColor: 'rgba(120,200,140,0.30)',
+    borderLeftColor: 'rgba(120,200,140,0.30)',
   },
-  welcomeLogoText: { fontFamily: FONTS.bold, fontSize: SIZES.xxl, color: COLORS.surface },
+  welcomeLogoText: { ...FONTS.bold, fontSize: 38, color: COLORS.amberLight },
   welcomeSchool: {
-    fontFamily: FONTS.semiBold,
+    ...FONTS.medium,
     fontSize: SIZES.xs,
     color: COLORS.sectionLabel,
     letterSpacing: 0.8,
   },
   welcomeHeadline: {
-    fontFamily: FONTS.bold,
+    ...FONTS.bold,
     fontSize: SIZES.xxxl,
     color: COLORS.textPrimary,
     letterSpacing: -1.2,
     marginBottom: SPACING.lg,
   },
   welcomeSub: {
-    fontFamily: FONTS.regular,
+    ...FONTS.regular,
     fontSize: SIZES.md,
     color: COLORS.textSecondary,
     lineHeight: 24,
@@ -284,23 +287,22 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.amber,
     marginTop: 5,
     flexShrink: 0,
   },
-  featureTitle: { fontFamily: FONTS.semiBold, fontSize: SIZES.md, color: COLORS.textPrimary },
-  featureDesc: { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary, marginTop: 1 },
+  featureTitle: { ...FONTS.semiBold, fontSize: SIZES.md, color: COLORS.textPrimary },
+  featureDesc: { ...FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary, marginTop: 1 },
 
-  // Step pages
   stepHeadline: {
-    fontFamily: FONTS.bold,
+    ...FONTS.bold,
     fontSize: SIZES.xxl,
     color: COLORS.textPrimary,
     letterSpacing: -0.8,
     marginBottom: SPACING.xs,
   },
   stepSub: {
-    fontFamily: FONTS.regular,
+    ...FONTS.regular,
     fontSize: SIZES.sm,
     color: COLORS.textSecondary,
     lineHeight: 22,
@@ -310,51 +312,48 @@ const styles = StyleSheet.create({
   form: { gap: SPACING.xl },
   inputGroup: { gap: SPACING.sm },
   inputLabel: {
-    fontFamily: FONTS.semiBold,
+    ...FONTS.medium,
     fontSize: SIZES.xs,
     color: COLORS.sectionLabel,
     letterSpacing: 0.5,
   },
   input: {
-    height: 48,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.sm,
+    height: 50,
+    backgroundColor: COLORS.inputBg,
+    borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    fontFamily: FONTS.regular,
+    borderTopWidth: 1, borderLeftWidth: 1,
+    borderTopColor: 'rgba(163,170,155,0.55)', borderLeftColor: 'rgba(163,170,155,0.55)',
+    borderBottomWidth: 1, borderRightWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.65)', borderRightColor: 'rgba(255,255,255,0.65)',
+    ...FONTS.regular,
     fontSize: SIZES.md,
     color: COLORS.textPrimary,
-    ...SHADOWS.subtle,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
   selectChip: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.base,
+    ...SHADOWS.raised_sm,
   },
-  selectChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  selectChipText: { fontFamily: FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
-  selectChipTextActive: { color: COLORS.surface },
+  selectChipActive: { backgroundColor: COLORS.primary },
+  selectChipText: { ...FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
+  selectChipTextActive: { color: COLORS.baseLight },
 
-  // Dietary grid
   dietGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md, marginBottom: SPACING.xl },
   dietCard: {
     width: (width - SPACING.lg * 2 - SPACING.md) / 2,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.base,
+    borderRadius: RADIUS.lg,
     padding: SPACING.lg,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
     ...SHADOWS.subtle,
   },
-  dietCardActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
-  dietLabel: { fontFamily: FONTS.bold, fontSize: SIZES.sm, color: COLORS.textPrimary, marginBottom: 3 },
-  dietLabelActive: { color: COLORS.primary },
-  dietDesc: { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
+  dietCardActive: { backgroundColor: COLORS.primaryLight },
+  dietLabel: { ...FONTS.bold, fontSize: SIZES.sm, color: COLORS.textPrimary, marginBottom: 3 },
+  dietLabelActive: { color: COLORS.primaryDeep },
+  dietDesc: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
   dietCheck: {
     position: 'absolute',
     top: SPACING.sm,
@@ -366,7 +365,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dietCheckText: { fontFamily: FONTS.bold, fontSize: 11, color: COLORS.surface },
+  dietCheckText: { ...FONTS.bold, fontSize: 11, color: COLORS.baseLight },
 
   navRow: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.xl, paddingBottom: SPACING.xl },
 });

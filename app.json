@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Nutrigain",
-    "slug": "nutrigain",
+    "name": "Graze",
+    "slug": "graze",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,18 +9,18 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#BB0000"
+      "backgroundColor": "#1e4d2b"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nutrigain.app"
+      "bundleIdentifier": "com.graze.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFF8F0"
+        "backgroundColor": "#e4e8e0"
       },
-      "package": "com.nutrigain.app"
+      "package": "com.graze.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"

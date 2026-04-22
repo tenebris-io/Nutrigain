@@ -11,7 +11,6 @@ export default function DashboardScreen() {
   const { user, weeklyData } = useApp();
   const [macroView, setMacroView] = useState('calories');
 
-  // ── Build last-7-days chart data ─────────────────────────────────────────
   const chartDays = useMemo(() => {
     const today = todayISO();
     return lastNDays(7).map(({ dateStr, dayAbbr }) => {
@@ -114,18 +113,16 @@ export default function DashboardScreen() {
           <Text style={styles.legendText}>Within goal</Text>
           <View style={[styles.legendDot, { backgroundColor: COLORS.error }]} />
           <Text style={styles.legendText}>Over goal</Text>
-          <View style={[styles.legendDot, { backgroundColor: COLORS.border, marginLeft: SPACING.sm }]} />
-          <Text style={styles.legendText}>Today</Text>
         </View>
       </View>
 
       {/* ── Today's macros ───────────────────────────────────────── */}
       <SectionHeader title="Today's Macros" />
       <View style={styles.macroCard}>
-        <MacroBar label="Calories" current={user.currentCalories} goal={user.calorieGoal} color={COLORS.primary} />
-        <MacroBar label="Protein"  current={user.currentProtein}  goal={user.proteinGoal}  color={COLORS.success} />
-        <MacroBar label="Carbs"    current={user.currentCarbs}    goal={user.carbGoal}     color={COLORS.warning} />
-        <MacroBar label="Fat"      current={user.currentFat}      goal={user.fatGoal}      color={COLORS.yellow} />
+        <MacroBar label="Calories" current={user.currentCalories} goal={user.calorieGoal} color={COLORS.amber} />
+        <MacroBar label="Protein"  current={user.currentProtein}  goal={user.proteinGoal}  color={COLORS.primary} />
+        <MacroBar label="Carbs"    current={user.currentCarbs}    goal={user.carbGoal}     color={COLORS.primarySoft} />
+        <MacroBar label="Fat"      current={user.currentFat}      goal={user.fatGoal}      color={COLORS.amberDark} />
       </View>
 
       {/* ── Swipe tracker ────────────────────────────────────────── */}
@@ -141,10 +138,10 @@ export default function DashboardScreen() {
               <Text style={styles.swipeNum}>{user.swipesRemaining}</Text>
               <Text style={styles.swipeOf}> / {user.totalSwipes} remaining</Text>
             </View>
-            <View style={styles.swipeBar}>
+            <View style={styles.swipeBarTrack}>
               <View style={[styles.swipeFill, {
                 width: `${Math.min((user.swipesRemaining / user.totalSwipes) * 100, 100)}%`,
-                backgroundColor: user.swipesRemaining <= 3 ? COLORS.error : COLORS.success,
+                backgroundColor: user.swipesRemaining <= 3 ? COLORS.error : COLORS.primary,
               }]} />
             </View>
             {user.swipesRemaining <= 4 && (
@@ -164,36 +161,36 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1, backgroundColor: COLORS.base },
   content: {},
 
   pageHeader: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.primaryDeep,
     paddingTop: SPACING.xxxl,
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.lg,
-    borderBottomWidth: 0.5,
-    borderBottomColor: COLORS.border,
+    paddingBottom: SPACING.xl,
+    borderBottomLeftRadius: RADIUS.xl,
+    borderBottomRightRadius: RADIUS.xl,
   },
-  title:    { fontFamily: FONTS.bold, fontSize: SIZES.xxxl, color: COLORS.textPrimary, letterSpacing: -1 },
-  subtitle: { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary, marginTop: 2 },
+  title:    { ...FONTS.bold, fontSize: SIZES.xxxl, color: COLORS.amberLight, letterSpacing: -0.5 },
+  subtitle: { ...FONTS.regular, fontSize: SIZES.sm, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
 
   statsCard: {
     flexDirection: 'row',
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.base,
+    borderRadius: RADIUS.xl,
     marginHorizontal: SPACING.lg,
     ...SHADOWS.subtle,
     overflow: 'hidden',
   },
   statItem:    { flex: 1, alignItems: 'center', paddingVertical: SPACING.lg },
-  statDivider: { width: 0.5, backgroundColor: COLORS.border, marginVertical: SPACING.sm },
-  statNum:     { fontFamily: FONTS.bold, fontSize: SIZES.xl, color: COLORS.primary, letterSpacing: -0.5 },
-  statLabel:   { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
+  statDivider: { width: 1, backgroundColor: 'rgba(163,170,155,0.30)', marginVertical: SPACING.sm },
+  statNum:     { ...FONTS.bold, fontSize: SIZES.xl, color: COLORS.amber, letterSpacing: -0.5 },
+  statLabel:   { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 2 },
 
   chartCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.base,
+    borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginHorizontal: SPACING.lg,
     ...SHADOWS.subtle,
@@ -202,48 +199,54 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', marginBottom: SPACING.lg,
   },
-  chartTitle:       { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary },
-  chartToggle:      { flexDirection: 'row', backgroundColor: COLORS.background, borderRadius: RADIUS.full, padding: 2 },
+  chartTitle:       { ...FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary },
+  chartToggle:      { flexDirection: 'row', backgroundColor: COLORS.inputBg, borderRadius: RADIUS.full, padding: 3 },
   toggleBtn:        { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: RADIUS.full },
   toggleBtnActive:  { backgroundColor: COLORS.primary },
-  toggleText:       { fontFamily: FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary },
-  toggleTextActive: { color: COLORS.surface },
+  toggleText:       { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary },
+  toggleTextActive: { color: COLORS.baseLight },
 
   bars:          { flexDirection: 'row', alignItems: 'flex-end', height: BAR_MAX_H + 36, gap: 4 },
   barWrap:       { flex: 1, alignItems: 'center' },
   barTrack:      {
     width: '85%', height: BAR_MAX_H,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.inputBg,
     borderRadius: RADIUS.sm, overflow: 'hidden', justifyContent: 'flex-end',
+    borderTopWidth: 1, borderLeftWidth: 1,
+    borderTopColor: 'rgba(163,170,155,0.50)', borderLeftColor: 'rgba(163,170,155,0.50)',
   },
-  barTrackToday: { borderWidth: 1.5, borderColor: COLORS.primary },
+  barTrackToday: { borderWidth: 2, borderColor: COLORS.amber },
   barFill:       { width: '100%', borderRadius: RADIUS.sm },
-  barDay:        { fontFamily: FONTS.medium, fontSize: 10, color: COLORS.textSecondary, marginTop: 4 },
-  barDayToday:   { color: COLORS.primary, fontFamily: FONTS.bold },
-  barVal:        { fontFamily: FONTS.regular, fontSize: 9, color: COLORS.textSecondary },
+  barDay:        { ...FONTS.medium, fontSize: 10, color: COLORS.textSecondary, marginTop: 4 },
+  barDayToday:   { color: COLORS.amber, ...FONTS.bold },
+  barVal:        { ...FONTS.regular, fontSize: 9, color: COLORS.textSecondary },
 
   chartLegend: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: SPACING.md },
   legendDot:   { width: 8, height: 8, borderRadius: RADIUS.full },
-  legendText:  { fontFamily: FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginRight: SPACING.md },
+  legendText:  { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginRight: SPACING.md },
 
   macroCard: {
-    backgroundColor: COLORS.surface, borderRadius: RADIUS.md,
+    backgroundColor: COLORS.base, borderRadius: RADIUS.xl,
     padding: SPACING.lg, marginHorizontal: SPACING.lg, ...SHADOWS.subtle,
   },
 
   swipeCard: {
-    backgroundColor: COLORS.surface, borderRadius: RADIUS.md,
+    backgroundColor: COLORS.base, borderRadius: RADIUS.xl,
     padding: SPACING.lg, marginHorizontal: SPACING.lg, ...SHADOWS.subtle,
   },
   swipeHeader:    { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xs },
-  swipeTitle:     { fontFamily: FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary },
-  swipePlan:      { fontFamily: FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary },
+  swipeTitle:     { ...FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary },
+  swipePlan:      { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary },
   swipeNumRow:    { flexDirection: 'row', alignItems: 'baseline', marginBottom: SPACING.md },
-  swipeNum:       { fontFamily: FONTS.bold, fontSize: SIZES.xxxl, color: COLORS.textPrimary, letterSpacing: -1 },
-  swipeOf:        { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary },
-  swipeBar:       { height: 8, backgroundColor: COLORS.border, borderRadius: RADIUS.full, overflow: 'hidden', marginBottom: SPACING.md },
+  swipeNum:       { ...FONTS.bold, fontSize: SIZES.xxxl, color: COLORS.textPrimary, letterSpacing: -1 },
+  swipeOf:        { ...FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary },
+  swipeBarTrack: {
+    height: 8, backgroundColor: COLORS.inputBg, borderRadius: RADIUS.full, overflow: 'hidden', marginBottom: SPACING.md,
+    borderTopWidth: 1, borderLeftWidth: 1,
+    borderTopColor: 'rgba(163,170,155,0.50)', borderLeftColor: 'rgba(163,170,155,0.50)',
+  },
   swipeFill:      { height: '100%', borderRadius: RADIUS.full },
-  swipeAlert:     { backgroundColor: COLORS.warningLight, borderRadius: RADIUS.sm, padding: SPACING.md },
-  swipeAlertText: { fontFamily: FONTS.medium, fontSize: SIZES.xs, color: COLORS.warning },
-  swipeEmpty:     { fontFamily: FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary, marginTop: SPACING.xs },
+  swipeAlert:     { backgroundColor: COLORS.amberLight, borderRadius: RADIUS.sm, padding: SPACING.md },
+  swipeAlertText: { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.amberDark },
+  swipeEmpty:     { ...FONTS.regular, fontSize: SIZES.sm, color: COLORS.textSecondary, marginTop: SPACING.xs },
 });
