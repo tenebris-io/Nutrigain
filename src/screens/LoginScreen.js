@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Image,
 } from 'react-native';
-import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
+import { COLORS, FONTS, SIZES, SPACING } from '../theme';
 import { useApp } from '../context/AppContext';
 
 export default function LoginScreen() {
@@ -35,26 +35,35 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>G</Text>
+        {/* Masthead */}
+        <View style={styles.masthead}>
+          <View style={styles.mastheadTop}>
+            <Text style={styles.mastheadDate}>THE OHIO STATE UNIVERSITY</Text>
+            <Text style={styles.mastheadIssue}>Campus Dining</Text>
           </View>
-          <Text style={styles.school}>THE OHIO STATE UNIVERSITY</Text>
-          <Text style={styles.appName}>Graze</Text>
-          <Text style={styles.tagline}>Campus dining, naturally.</Text>
+          <View style={styles.mastheadLogo}>
+            <Image
+              source={require('../../assets/IconOnly_Transparent_NoBuffer (1).png')}
+              style={styles.logoImg}
+              resizeMode="contain"
+            />
+            <Text style={styles.mastheadTitle}>Graze</Text>
+          </View>
+          <Text style={styles.mastheadTagline}>Campus dining, naturally.</Text>
+          <View style={styles.mastheadRule} />
         </View>
 
-        {/* Login card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Sign In</Text>
+        {/* Sign-in form */}
+        <View style={styles.formSection}>
+          <Text style={styles.kicker}>Sign In</Text>
+          <View style={styles.accentLine} />
 
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>USERNAME</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g. max.1282"
-              placeholderTextColor={COLORS.textPlaceholder}
+              placeholderTextColor={COLORS.inkFaint}
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
@@ -68,7 +77,7 @@ export default function LoginScreen() {
             <TextInput
               style={styles.input}
               placeholder="Password"
-              placeholderTextColor={COLORS.textPlaceholder}
+              placeholderTextColor={COLORS.inkFaint}
               value={password}
               onChangeText={setPassword}
               secureTextEntry
@@ -83,11 +92,11 @@ export default function LoginScreen() {
             style={[styles.loginBtn, loading && styles.loginBtnDisabled]}
             onPress={handleLogin}
             disabled={loading}
-            activeOpacity={0.82}
+            activeOpacity={0.75}
           >
             {loading
-              ? <ActivityIndicator color={COLORS.primaryDeep} size="small" />
-              : <Text style={styles.loginBtnText}>Sign In</Text>
+              ? <ActivityIndicator color={COLORS.cream} size="small" />
+              : <Text style={styles.loginBtnText}>SIGN IN</Text>
             }
           </TouchableOpacity>
         </View>
@@ -101,123 +110,68 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: COLORS.base },
-  container: {
-    flexGrow: 1,
+  flex:      { flex: 1, backgroundColor: COLORS.cream },
+  container: { flexGrow: 1, paddingBottom: SPACING.xxxl },
+
+  masthead: {
+    backgroundColor: COLORS.cream,
+    paddingTop: SPACING.xxxl + SPACING.xl,
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xxxl * 1.5,
-    paddingBottom: SPACING.xxxl,
+    paddingBottom: SPACING.lg,
+    borderBottomWidth: 3,
+    borderBottomColor: COLORS.ink,
+  },
+  mastheadTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.rule,
+    marginBottom: SPACING.md,
+  },
+  mastheadDate:   { ...FONTS.medium, fontSize: 9, color: COLORS.inkLight, letterSpacing: 0.8 },
+  mastheadIssue:  { ...FONTS.medium, fontSize: 9, color: COLORS.inkLight, letterSpacing: 0.8 },
+  mastheadLogo:   { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  logoImg:        { width: 52, height: 52 },
+  mastheadTitle:  { fontFamily: 'PlayfairDisplay_900Black', fontSize: SIZES.display, color: COLORS.primaryDeep, letterSpacing: -1 },
+  mastheadTagline:{ ...FONTS.serifLight, fontSize: SIZES.md, color: COLORS.inkMid, fontStyle: 'italic', marginTop: SPACING.xs },
+  mastheadRule:   { height: 2, backgroundColor: COLORS.amber, marginTop: SPACING.md },
+
+  formSection: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.xxl,
+  },
+  kicker: { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.amberDark, letterSpacing: 1.4, textTransform: 'uppercase' },
+  accentLine: { width: 32, height: 2, backgroundColor: COLORS.amber, marginTop: SPACING.xs, marginBottom: SPACING.xl },
+
+  fieldGroup:  { marginBottom: SPACING.xl },
+  fieldLabel:  { ...FONTS.medium, fontSize: 10, color: COLORS.inkLight, letterSpacing: 0.8, marginBottom: SPACING.sm },
+  input: {
+    height: 46,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1.5,
+    borderBottomColor: COLORS.ink,
+    paddingHorizontal: 0,
+    ...FONTS.serif,
+    fontSize: SIZES.md,
+    color: COLORS.ink,
   },
 
-  header: { alignItems: 'center', marginBottom: SPACING.xxxl },
-  logo: {
-    width: 76,
-    height: 76,
-    borderRadius: RADIUS.lg,
+  error: { ...FONTS.regular, fontSize: SIZES.sm, color: COLORS.error, marginBottom: SPACING.md, fontStyle: 'italic' },
+
+  loginBtn: {
+    height: 46,
     backgroundColor: COLORS.primaryDeep,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.md,
-    ...SHADOWS.medium,
-    shadowColor: '#1e4d2b',
-    shadowOpacity: 0.45,
-    borderTopColor: 'rgba(120,200,140,0.30)',
-    borderLeftColor: 'rgba(120,200,140,0.30)',
-  },
-  logoText: { ...FONTS.bold, fontSize: 38, color: COLORS.amberLight },
-  school: {
-    ...FONTS.medium,
-    fontSize: SIZES.xs,
-    color: COLORS.sectionLabel,
-    letterSpacing: 0.8,
-    marginBottom: SPACING.xs,
-  },
-  appName: {
-    ...FONTS.bold,
-    fontSize: SIZES.xxxl,
-    color: COLORS.textPrimary,
-    letterSpacing: -0.5,
-  },
-  tagline: {
-    ...FONTS.regular,
-    fontSize: SIZES.sm,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-
-  card: {
-    backgroundColor: COLORS.base,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.xl,
-    ...SHADOWS.subtle,
-  },
-  cardTitle: {
-    ...FONTS.bold,
-    fontSize: SIZES.xl,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xl,
-  },
-
-  fieldGroup: { marginBottom: SPACING.lg },
-  fieldLabel: {
-    ...FONTS.medium,
-    fontSize: SIZES.xs,
-    color: COLORS.sectionLabel,
-    letterSpacing: 0.5,
-    marginBottom: SPACING.xs,
-  },
-  input: {
-    height: 50,
-    backgroundColor: COLORS.inputBg,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: 'rgba(163,170,155,0.55)',
-    borderLeftColor: 'rgba(163,170,155,0.55)',
-    borderBottomWidth: 1,
-    borderRightWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.65)',
-    borderRightColor: 'rgba(255,255,255,0.65)',
-    ...FONTS.regular,
-    fontSize: SIZES.md,
-    color: COLORS.textPrimary,
-  },
-
-  error: {
-    ...FONTS.regular,
-    fontSize: SIZES.sm,
-    color: COLORS.error,
-    marginBottom: SPACING.md,
-  },
-
-  loginBtn: {
-    height: 52,
-    backgroundColor: COLORS.amber,
-    borderRadius: RADIUS.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: SPACING.sm,
-    ...SHADOWS.subtle,
-    shadowColor: '#a06414',
-    shadowOpacity: 0.45,
-    borderTopColor: 'rgba(255,230,140,0.60)',
-    borderLeftColor: 'rgba(255,230,140,0.60)',
+    marginTop: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.primaryDeep,
   },
   loginBtnDisabled: { opacity: 0.55 },
-  loginBtnText: {
-    ...FONTS.bold,
-    fontSize: SIZES.md,
-    color: COLORS.primaryDeep,
-    letterSpacing: 0.3,
-  },
+  loginBtnText: { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.cream, letterSpacing: 1.2 },
 
-  hint: {
-    textAlign: 'center',
-    ...FONTS.regular,
-    fontSize: SIZES.xs,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xl,
-  },
-  hintBold: { ...FONTS.semiBold, color: COLORS.textPrimary },
+  hint:     { textAlign: 'center', ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.inkLight, marginTop: SPACING.xxl, fontStyle: 'italic' },
+  hintBold: { ...FONTS.medium, color: COLORS.ink, fontStyle: 'normal' },
 });

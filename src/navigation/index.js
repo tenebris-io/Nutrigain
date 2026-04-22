@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Image, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
+import { COLORS, FONTS, SIZES, SPACING } from '../theme';
 
 import HomeScreen from '../screens/HomeScreen';
 import DiningScreen from '../screens/DiningScreen';
@@ -19,20 +19,6 @@ import { useApp } from '../context/AppContext';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createStackNavigator();
-
-// ── Neumorphic tab button — raised when inactive, inset when active ──
-function NeuTabButton({ onPress, children, accessibilityState }) {
-  const focused = accessibilityState?.selected;
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.85}
-      style={[styles.tabBtn, focused && styles.tabBtnActive]}
-    >
-      {children}
-    </TouchableOpacity>
-  );
-}
 
 function DiningStack() {
   return (
@@ -71,8 +57,9 @@ function MainTabs() {
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.label,
         tabBarActiveTintColor: COLORS.primaryDeep,
-        tabBarInactiveTintColor: COLORS.primaryMuted,
-        tabBarButton: (props) => <NeuTabButton {...props} />,
+        tabBarInactiveTintColor: COLORS.inkFaint,
+        tabBarItemStyle: styles.tabItem,
+        tabBarActiveBackgroundColor: COLORS.cream,
       }}
     >
       <Tab.Screen
@@ -81,7 +68,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ focused, color }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={20} color={color} />
           ),
         }}
       />
@@ -91,7 +78,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Dining',
           tabBarIcon: ({ focused, color }) => (
-            <Ionicons name={focused ? 'restaurant' : 'restaurant-outline'} size={22} color={color} />
+            <Ionicons name={focused ? 'restaurant' : 'restaurant-outline'} size={20} color={color} />
           ),
         }}
       />
@@ -101,7 +88,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'AI Chat',
           tabBarIcon: ({ focused, color }) => (
-            <Ionicons name={focused ? 'sparkles' : 'sparkles-outline'} size={22} color={color} />
+            <Ionicons name={focused ? 'sparkles' : 'sparkles-outline'} size={20} color={color} />
           ),
         }}
       />
@@ -111,7 +98,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Progress',
           tabBarIcon: ({ focused, color }) => (
-            <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={22} color={color} />
+            <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={20} color={color} />
           ),
         }}
       />
@@ -121,7 +108,7 @@ function MainTabs() {
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ focused, color }) => (
-            <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} />
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={20} color={color} />
           ),
         }}
       />
@@ -140,7 +127,6 @@ export default function Navigation() {
           style={styles.splashLogo}
           resizeMode="contain"
         />
-        <ActivityIndicator size="large" color={COLORS.amber} style={{ marginTop: SPACING.xl }} />
       </View>
     );
   }
@@ -175,58 +161,22 @@ export default function Navigation() {
 const styles = StyleSheet.create({
   splash: {
     flex: 1,
-    backgroundColor: COLORS.base,
+    backgroundColor: COLORS.cream,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  splashLogo: {
-    width: 120,
-    height: 120,
-  },
+  splashLogo: { width: 100, height: 100 },
 
   tabBar: {
-    backgroundColor: COLORS.base,
-    borderTopWidth: 0,
-    height: 84,
-    paddingBottom: 16,
+    backgroundColor: COLORS.cream,
+    borderTopWidth: 3,
+    borderTopColor: COLORS.ink,
+    height: 80,
+    paddingBottom: 14,
     paddingTop: 8,
-    paddingHorizontal: SPACING.xs,
-    // Upward neumorphic shadow
-    shadowColor: '#a3aa9b',
-    shadowOffset: { width: 0, height: -5 },
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    elevation: 10,
-    // Top highlight edge
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.85)',
-  },
-
-  label: { ...FONTS.medium, fontSize: 10, marginTop: 2 },
-
-  // Inactive tab item — flat (no extra shadow, bar already raised)
-  tabBtn: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: RADIUS.md,
-    paddingVertical: SPACING.xs,
-    marginHorizontal: 2,
-    marginVertical: 4,
-  },
-  // Active tab item — inset pressed-in pill
-  tabBtnActive: {
-    backgroundColor: COLORS.inputBg,
-    // Inset shadow: dark top-left, light bottom-right
-    shadowOpacity: 0,
     elevation: 0,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: 'rgba(163,170,155,0.65)',
-    borderLeftColor: 'rgba(163,170,155,0.65)',
-    borderBottomWidth: 1,
-    borderRightWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.80)',
-    borderRightColor: 'rgba(255,255,255,0.80)',
+    shadowOpacity: 0,
   },
+  label:   { ...FONTS.medium, fontSize: 9, letterSpacing: 0.6, textTransform: 'uppercase', marginTop: 1 },
+  tabItem: { paddingTop: 2 },
 });

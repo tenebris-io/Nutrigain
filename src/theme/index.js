@@ -1,69 +1,75 @@
-// Graze — Neumorphic Design System
-// Warm clay base with forest-green & amber accent palette
+// Graze — Editorial / Magazine Design System
+// Warm cream newsprint base, Playfair Display headlines, sharp corners, ink hierarchy
 
 export const COLORS = {
-  // ── Base surface ("the clay") ─────────────────────────────
-  base:          '#e4e8e0',
-  baseDark:      '#ccd0c8',
-  baseLight:     '#f4f7f1',
-  background:    '#e4e8e0',   // alias — page background
-  surface:       '#e4e8e0',   // alias — card surfaces (neumorphic: match background)
-  inputBg:       '#d5d9d1',   // slightly darker for inset/input fields
+  // ── Paper & ink ───────────────────────────────────────────────
+  cream:        '#f5f0e8',   // primary background — warm newsprint
+  creamDark:    '#e8e2d6',   // section fills, subtle dividers
+  white:        '#ffffff',
+  ink:          '#1a1a14',   // primary text — near-black, warm
+  inkMid:       '#3c3c30',   // body copy
+  inkLight:     '#7a7a68',   // captions, bylines, metadata
+  inkFaint:     '#b8b4a4',   // rules, hairlines, placeholders
+  rule:         '#d0cab8',   // column rules, horizontal dividers
 
-  // ── Brand greens ──────────────────────────────────────────
-  primary:       '#2e7d3e',   // green-mid — interactive, links, active states
-  primaryDeep:   '#1e4d2b',   // logo dark green — hero headers, icons
-  primarySoft:   '#4a9e5c',   // hover/tag accents
-  primaryMuted:  '#8ab898',   // disabled, placeholders
-  primaryLight:  '#d4e8d8',   // green tag fills, light badges
+  // ── Brand greens ──────────────────────────────────────────────
+  primary:      '#2e7d3e',   // interactive accents, links
+  primaryDeep:  '#1e4d2b',   // masthead, headers, primary brand
+  primarySoft:  '#4a9e5c',   // tags, inline highlights
+  primaryLight: '#e8f2ea',   // tinted feature backgrounds (green-wash)
+  primaryMuted: '#8ab898',   // disabled, muted
 
-  // ── Brand amber ───────────────────────────────────────────
-  amber:         '#f5a623',   // primary CTA accent
-  amberDark:     '#c4821a',   // pressed CTA
-  amberLight:    '#fcd07a',   // badge fills, highlights
+  // ── Brand amber ───────────────────────────────────────────────
+  amber:        '#f5a623',   // accent rules, drop caps, kicker lines
+  amberDark:    '#c4821a',   // kicker text, pressed
+  amberLight:   '#fcd07a',   // light tint accents
+  amberWash:    '#fef6e4',   // warm panel tint
 
-  // ── Text ──────────────────────────────────────────────────
-  textPrimary:   '#1e4d2b',   // headings — deep forest green
-  textBody:      '#3d5c46',   // paragraph text
-  textSecondary: '#7a9a82',   // labels, captions
-  sectionLabel:  '#7a9a82',   // ALL CAPS section headers
-  textPlaceholder: '#a8c0ae', // input placeholders
+  // ── Semantic ──────────────────────────────────────────────────
+  success:      '#2e7d3e',
+  warning:      '#f5a623',
+  error:        '#c0392b',
 
-  // ── Semantic ──────────────────────────────────────────────
-  success:       '#2e7d3e',
-  warning:       '#f5a623',
-  error:         '#c0392b',
+  // ── Dining status ─────────────────────────────────────────────
+  green:        '#34C759',
+  yellow:       '#FF9500',
+  red:          '#FF3B30',
+  greenLight:   '#e8f2ea',
+  yellowLight:  '#fef6e4',
+  redLight:     '#fce8e6',
 
-  // ── Dining status ─────────────────────────────────────────
-  green:         '#34C759',
-  yellow:        '#FF9500',
-  red:           '#FF3B30',
-  greenLight:    '#d4e8d8',
-  yellowLight:   '#fef3d0',
-  redLight:      '#fce8e6',
-
-  // ── Misc ──────────────────────────────────────────────────
-  border:        '#ccd0c8',   // subtle separator
-  chevron:       '#8ab898',   // muted green chevrons
-  link:          '#2e7d3e',   // in-text links
-
-  // Legacy aliases
-  secondary:      '#f5a623',
-  secondaryLight: '#fef3d0',
-  warningLight:   '#fef3d0',
-  errorLight:     '#fce8e6',
-  successLight:   '#d4e8d8',
-  yellowLight2:   '#fef3d0',
-  redLight2:      '#fce8e6',
+  // Legacy aliases for components
+  base:          '#f5f0e8',
+  background:    '#f5f0e8',
+  surface:       '#ffffff',
+  inputBg:       '#ece7df',
+  baseDark:      '#e8e2d6',
+  baseLight:     '#ffffff',
+  textPrimary:   '#1a1a14',
+  textBody:      '#3c3c30',
+  textSecondary: '#7a7a68',
+  sectionLabel:  '#7a7a68',
+  textPlaceholder: '#b8b4a4',
+  border:        '#d0cab8',
+  secondary:     '#f5a623',
+  secondaryLight:'#fef6e4',
+  warningLight:  '#fef6e4',
+  errorLight:    '#fce8e6',
+  successLight:  '#e8f2ea',
 };
 
-// Nunito (display/headings/buttons) + DM Sans (body/labels)
-// Usage: spread into styles — ...FONTS.bold
+// Playfair Display (headlines/display) + Source Serif 4 (editorial/body) + DM Sans (UI labels)
 export const FONTS = {
+  // DM Sans — UI: labels, buttons, tags, metadata
   regular:  { fontFamily: 'DMSans_400Regular' },
   medium:   { fontFamily: 'DMSans_500Medium' },
-  semiBold: { fontFamily: 'Nunito_600SemiBold' },
-  bold:     { fontFamily: 'Nunito_700Bold' },
+  // Playfair Display — headlines, masthead, pull quotes
+  semiBold: { fontFamily: 'PlayfairDisplay_700Bold' },
+  bold:     { fontFamily: 'PlayfairDisplay_900Black' },
+  // Source Serif 4 — body copy, deck, captions
+  serif:    { fontFamily: 'SourceSerif4_400Regular' },
+  serifLight: { fontFamily: 'SourceSerif4_300Light' },
+  serifItalic: { fontFamily: 'SourceSerif4_400Regular_Italic' },
 };
 
 export const SIZES = {
@@ -73,8 +79,8 @@ export const SIZES = {
   lg:      20,
   xl:      24,
   xxl:     30,
-  xxxl:    34,
-  display: 48,
+  xxxl:    36,
+  display: 52,
 };
 
 export const SPACING = {
@@ -88,80 +94,20 @@ export const SPACING = {
   huge: 64,
 };
 
+// Editorial: all sharp corners — no rounded radius
 export const RADIUS = {
-  sm:   14,
-  md:   20,   // Graze: larger rounded corners
-  lg:   28,
-  xl:   40,
-  full: 9999,
+  sm:   0,
+  md:   0,
+  lg:   0,
+  xl:   0,
+  full: 0,
 };
 
-// ── Neumorphic shadow system ──────────────────────────────────
-// React Native only supports one shadow direction per view.
-// RAISED: dark shadow bottom-right + white highlight border top-left.
-// INSET (pressed/active): flip — use inputBg background, dark border top-left,
-//   white border bottom-right. No outward shadow (elevation 0).
+// Editorial: no shadows — hierarchy from typography + rules only
 export const SHADOWS = {
-  // Raised — standard card / button
-  subtle: {
-    shadowColor: '#a3aa9b',
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 0.60,
-    shadowRadius: 12,
-    elevation: 5,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.80)',
-    borderLeftColor: 'rgba(255,255,255,0.80)',
-  },
-  // Raised — small (chips, avatars)
-  raised_sm: {
-    shadowColor: '#a3aa9b',
-    shadowOffset: { width: 3, height: 3 },
-    shadowOpacity: 0.50,
-    shadowRadius: 6,
-    elevation: 3,
-    borderTopWidth: 0.5,
-    borderLeftWidth: 0.5,
-    borderTopColor: 'rgba(255,255,255,0.75)',
-    borderLeftColor: 'rgba(255,255,255,0.75)',
-  },
-  // Raised — medium hover uplift
-  medium: {
-    shadowColor: '#a3aa9b',
-    shadowOffset: { width: 8, height: 8 },
-    shadowOpacity: 0.65,
-    shadowRadius: 16,
-    elevation: 7,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.85)',
-    borderLeftColor: 'rgba(255,255,255,0.85)',
-  },
-  // Inset — active / pressed / focused (use COLORS.inputBg as bg)
-  inset: {
-    shadowOpacity: 0,
-    elevation: 0,
-    borderTopWidth: 1.5,
-    borderLeftWidth: 1.5,
-    borderTopColor: 'rgba(163,170,155,0.70)',
-    borderLeftColor: 'rgba(163,170,155,0.70)',
-    borderBottomWidth: 1.5,
-    borderRightWidth: 1.5,
-    borderBottomColor: 'rgba(255,255,255,0.80)',
-    borderRightColor: 'rgba(255,255,255,0.80)',
-  },
-  // Inset — small (nav pills, small chips)
-  inset_sm: {
-    shadowOpacity: 0,
-    elevation: 0,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: 'rgba(163,170,155,0.65)',
-    borderLeftColor: 'rgba(163,170,155,0.65)',
-    borderBottomWidth: 1,
-    borderRightWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.75)',
-    borderRightColor: 'rgba(255,255,255,0.75)',
-  },
+  subtle:   {},
+  medium:   {},
+  raised_sm:{},
+  inset:    {},
+  inset_sm: {},
 };

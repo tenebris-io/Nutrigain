@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { COLORS, FONTS, SIZES, SPACING } from '../theme';
 
 // ── Button ──────────────────────────────────────────────────────────
+// Editorial style: outline border (no fills), uppercase DM Sans label
 export function Button({ label, onPress, variant = 'primary', size = 'md', disabled, loading, style }) {
   const isSecondary = variant === 'secondary';
   const isGhost     = variant === 'ghost';
@@ -10,37 +11,33 @@ export function Button({ label, onPress, variant = 'primary', size = 'md', disab
     <TouchableOpacity
       onPress={onPress}
       disabled={disabled || loading}
-      activeOpacity={0.80}
+      activeOpacity={0.70}
       style={[
         styles.button,
-        size === 'sm'  && styles.buttonSm,
-        isSecondary    && styles.buttonSecondary,
-        isGhost        && styles.buttonGhost,
+        isSecondary && styles.buttonSecondary,
+        isGhost     && styles.buttonGhost,
         (disabled || loading) && styles.buttonDisabled,
         style,
       ]}
     >
-      {loading ? (
-        <ActivityIndicator color={isSecondary || isGhost ? COLORS.primary : COLORS.primaryDeep} size="small" />
-      ) : (
-        <Text style={[
-          styles.buttonLabel,
-          isSecondary && styles.buttonLabelSecondary,
-          isGhost     && styles.buttonLabelGhost,
-          size === 'sm' && styles.buttonLabelSm,
-        ]}>
-          {label}
-        </Text>
-      )}
+      <Text style={[
+        styles.buttonLabel,
+        isSecondary && styles.buttonLabelSecondary,
+        isGhost     && styles.buttonLabelGhost,
+        size === 'sm' && styles.buttonLabelSm,
+      ]}>
+        {loading ? '...' : label.toUpperCase()}
+      </Text>
     </TouchableOpacity>
   );
 }
 
 // ── Card ─────────────────────────────────────────────────────────────
+// Editorial: white surface, top rule in ink (heavy), thin rule bottom
 export function Card({ children, style, onPress }) {
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.88} style={[styles.card, style]}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={[styles.card, style]}>
         {children}
       </TouchableOpacity>
     );
@@ -49,18 +46,9 @@ export function Card({ children, style, onPress }) {
 }
 
 // ── Badge ────────────────────────────────────────────────────────────
+// Editorial: thin border, no fill — tag style
 export function Badge({ label, color = 'primary' }) {
-  const bgMap = {
-    primary:   COLORS.primaryLight,
-    secondary: COLORS.amberLight,
-    success:   COLORS.primaryLight,
-    warning:   COLORS.amberLight,
-    error:     COLORS.redLight,
-    green:     COLORS.greenLight,
-    yellow:    COLORS.yellowLight,
-    red:       COLORS.redLight,
-  };
-  const textMap = {
+  const colorMap = {
     primary:   COLORS.primaryDeep,
     secondary: COLORS.amberDark,
     success:   COLORS.primaryDeep,
@@ -70,9 +58,10 @@ export function Badge({ label, color = 'primary' }) {
     yellow:    COLORS.amberDark,
     red:       COLORS.error,
   };
+  const c = colorMap[color] || colorMap.primary;
   return (
-    <View style={[styles.badge, { backgroundColor: bgMap[color] || bgMap.primary }]}>
-      <Text style={[styles.badgeText, { color: textMap[color] || textMap.primary }]}>{label}</Text>
+    <View style={[styles.badge, { borderColor: c }]}>
+      <Text style={[styles.badgeText, { color: c }]}>{label.toUpperCase()}</Text>
     </View>
   );
 }
@@ -84,7 +73,7 @@ export function MacroBar({ label, current, goal, color }) {
   return (
     <View style={styles.macroBarContainer}>
       <View style={styles.macroBarHeader}>
-        <Text style={styles.macroBarLabel}>{label}</Text>
+        <Text style={styles.macroBarLabel}>{label.toUpperCase()}</Text>
         <Text style={[styles.macroBarValue, overGoal && { color: COLORS.error }]}>
           {current} / {goal}
         </Text>
@@ -100,16 +89,20 @@ export function MacroBar({ label, current, goal, color }) {
 }
 
 // ── SectionHeader ─────────────────────────────────────────────────────
+// Editorial: amber 2px accent line above, ALL CAPS DM Sans label
 export function SectionHeader({ title, subtitle, action, onAction }) {
   return (
     <View style={styles.sectionHeader}>
-      <View>
-        <Text style={styles.sectionTitle}>{title.toUpperCase()}</Text>
-        {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
+      <View style={styles.sectionLeft}>
+        <View style={styles.sectionAccentLine} />
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.sectionTitle}>{title.toUpperCase()}</Text>
+          {subtitle ? <Text style={styles.sectionSubtitle}>{subtitle}</Text> : null}
+        </View>
       </View>
       {action && (
         <TouchableOpacity onPress={onAction}>
-          <Text style={styles.sectionAction}>{action}</Text>
+          <Text style={styles.sectionAction}>{action.toUpperCase()}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -120,197 +113,157 @@ export function SectionHeader({ title, subtitle, action, onAction }) {
 export function CrowdingDot({ status }) {
   if (!status) return null;
   const colorMap = { green: COLORS.green, yellow: COLORS.yellow, red: COLORS.red };
-  return <View style={[styles.dot, { backgroundColor: colorMap[status] || COLORS.textSecondary }]} />;
+  return <View style={[styles.dot, { backgroundColor: colorMap[status] || COLORS.inkLight }]} />;
 }
 
 // ── DietaryChip ──────────────────────────────────────────────────────
-// Active = neumorphic inset (pressed-in) with green tint.
-// Inactive = raised (extruded from clay).
+// Editorial tag style: border-only, no fill inactive; filled green active
 export function DietaryChip({ label, active, onPress }) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.75}
-      style={[styles.chip, active ? styles.chipActive : styles.chipRaised]}
+      activeOpacity={0.70}
+      style={[styles.chip, active && styles.chipActive]}
     >
-      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label.toUpperCase()}</Text>
     </TouchableOpacity>
   );
 }
 
 // ── Divider ───────────────────────────────────────────────────────────
-export function Divider() {
-  return <View style={styles.divider} />;
+export function Divider({ heavy }) {
+  return <View style={[styles.divider, heavy && styles.dividerHeavy]} />;
 }
 
 const styles = StyleSheet.create({
   // ── Button ──
   button: {
-    height: 52,
+    height: 46,
     paddingHorizontal: SPACING.xl,
-    backgroundColor: COLORS.amber,
-    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryDeep,
     alignItems: 'center',
     justifyContent: 'center',
-    // Amber raised shadow
-    shadowColor: '#a06414',
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 0.50,
-    shadowRadius: 10,
-    elevation: 5,
-    // Top-left highlight — lighter amber
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: 'rgba(255,230,140,0.70)',
-    borderLeftColor: 'rgba(255,230,140,0.70)',
-    // Bottom-right shadow edge — darker amber
-    borderBottomWidth: 1,
-    borderRightWidth: 1,
-    borderBottomColor: 'rgba(160,100,20,0.35)',
-    borderRightColor: 'rgba(160,100,20,0.35)',
-  },
-  buttonSm: {
-    height: 38,
-    paddingHorizontal: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.primaryDeep,
   },
   buttonSecondary: {
-    backgroundColor: COLORS.base,
-    shadowColor: '#a3aa9b',
-    shadowOffset: { width: 6, height: 6 },
-    shadowOpacity: 0.55,
-    shadowRadius: 10,
-    borderTopColor: 'rgba(255,255,255,0.80)',
-    borderLeftColor: 'rgba(255,255,255,0.80)',
-    borderBottomColor: 'rgba(163,170,155,0.25)',
-    borderRightColor: 'rgba(163,170,155,0.25)',
+    backgroundColor: 'transparent',
+    borderColor: COLORS.ink,
   },
   buttonGhost: {
     backgroundColor: 'transparent',
-    shadowOpacity: 0,
-    elevation: 0,
-    borderWidth: 0,
-    borderTopWidth: 0,
-    borderLeftWidth: 0,
-    borderBottomWidth: 0,
-    borderRightWidth: 0,
+    borderColor: COLORS.rule,
   },
-  buttonDisabled: { opacity: 0.45 },
+  buttonDisabled: { opacity: 0.40 },
   buttonLabel: {
-    ...FONTS.bold,
-    fontSize: SIZES.md,
-    color: COLORS.primaryDeep,
-    letterSpacing: 0.3,
+    ...FONTS.medium,
+    fontSize: SIZES.xs,
+    color: COLORS.cream,
+    letterSpacing: 0.10 * SIZES.xs,
   },
-  buttonLabelSm:        { fontSize: SIZES.sm },
-  buttonLabelSecondary: { color: COLORS.primary },
-  buttonLabelGhost:     { color: COLORS.primary },
+  buttonLabelSm:        { fontSize: 10 },
+  buttonLabelSecondary: { color: COLORS.ink },
+  buttonLabelGhost:     { color: COLORS.inkLight },
 
   // ── Card ──
+  // White surface, heavy top rule, thin bottom rule
   card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.white,
     padding: SPACING.lg,
-    ...SHADOWS.subtle,
+    borderTopWidth: 3,
+    borderTopColor: COLORS.ink,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.rule,
   },
 
   // ── Badge ──
   badge: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
-    borderRadius: RADIUS.full,
     alignSelf: 'flex-start',
-    // Subtle raised shadow per design guide tag spec
-    shadowColor: '#a3aa9b',
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
   },
   badgeText: {
-    ...FONTS.semiBold,
-    fontSize: SIZES.xs,
-    letterSpacing: 0.2,
+    ...FONTS.medium,
+    fontSize: 9,
+    letterSpacing: 0.8,
   },
 
   // ── MacroBar ──
   macroBarContainer: { marginBottom: SPACING.md },
   macroBarHeader:    { flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xs },
-  macroBarLabel:     { ...FONTS.medium, fontSize: SIZES.sm, color: COLORS.textSecondary },
-  macroBarValue:     { ...FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.textPrimary },
+  macroBarLabel:     { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.inkLight, letterSpacing: 0.6 },
+  macroBarValue:     { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.inkMid },
   macroBarTrack: {
-    height: 10,
-    backgroundColor: COLORS.inputBg,
-    borderRadius: RADIUS.full,
-    overflow: 'hidden',
-    // Inset look for the track
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: 'rgba(163,170,155,0.55)',
-    borderLeftColor: 'rgba(163,170,155,0.55)',
-    borderBottomWidth: 1,
-    borderRightWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.70)',
-    borderRightColor: 'rgba(255,255,255,0.70)',
+    height: 3,
+    backgroundColor: COLORS.creamDark,
+    borderBottomWidth: 0,
   },
-  macroBarFill: {
-    height: '100%',
-    borderRadius: RADIUS.full,
-  },
+  macroBarFill: { height: '100%' },
 
   // ── SectionHeader ──
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: SPACING.sm,
-    marginTop: SPACING.xl,
+    alignItems: 'flex-start',
+    marginBottom: SPACING.md,
+    marginTop: SPACING.xxl,
     paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.rule,
   },
-  sectionTitle:    { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.sectionLabel, letterSpacing: 0.8 },
-  sectionSubtitle: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 1 },
-  sectionAction:   { ...FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.primary },
+  sectionLeft:      { flex: 1 },
+  sectionAccentLine: {
+    width: 32,
+    height: 2,
+    backgroundColor: COLORS.amber,
+    marginBottom: SPACING.xs,
+  },
+  sectionTitleRow: {},
+  sectionTitle: {
+    ...FONTS.medium,
+    fontSize: SIZES.xs,
+    color: COLORS.inkLight,
+    letterSpacing: 1.2,
+  },
+  sectionSubtitle: {
+    ...FONTS.regular,
+    fontSize: SIZES.xs,
+    color: COLORS.inkLight,
+    marginTop: 1,
+  },
+  sectionAction: {
+    ...FONTS.medium,
+    fontSize: 10,
+    color: COLORS.primaryDeep,
+    letterSpacing: 0.8,
+    textDecorationLine: 'underline',
+  },
 
   // ── CrowdingDot ──
-  dot: { width: 9, height: 9, borderRadius: RADIUS.full },
+  dot: { width: 8, height: 8, borderRadius: 4 },
 
   // ── DietaryChip ──
   chip: {
-    height: 36,
+    height: 30,
     paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.base,
     marginRight: SPACING.sm,
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.rule,
+    backgroundColor: 'transparent',
   },
-  // Inactive = raised
-  chipRaised: {
-    ...SHADOWS.raised_sm,
-  },
-  // Active = pressed-in inset with green tint bg
   chipActive: {
-    backgroundColor: COLORS.primaryLight,
-    // Inset shadow: dark border top-left, light border bottom-right
-    shadowOpacity: 0,
-    elevation: 0,
-    borderTopWidth: 1.5,
-    borderLeftWidth: 1.5,
-    borderTopColor: 'rgba(120,160,130,0.60)',
-    borderLeftColor: 'rgba(120,160,130,0.60)',
-    borderBottomWidth: 1.5,
-    borderRightWidth: 1.5,
-    borderBottomColor: 'rgba(220,250,230,0.80)',
-    borderRightColor: 'rgba(220,250,230,0.80)',
+    backgroundColor: COLORS.primaryDeep,
+    borderColor: COLORS.primaryDeep,
   },
-  chipText:       { ...FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.textSecondary },
-  chipTextActive: { color: COLORS.primaryDeep },
+  chipText:       { ...FONTS.medium, fontSize: 10, color: COLORS.inkLight, letterSpacing: 0.6 },
+  chipTextActive: { color: COLORS.cream },
 
   // ── Divider ──
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: SPACING.lg,
-    opacity: 0.5,
-  },
+  divider:      { height: 1, backgroundColor: COLORS.rule, marginVertical: SPACING.lg },
+  dividerHeavy: { height: 3, backgroundColor: COLORS.ink },
 });

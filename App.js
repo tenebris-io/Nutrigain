@@ -1,14 +1,18 @@
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
   useFonts,
-  Nunito_400Regular,
-  Nunito_500Medium,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-} from '@expo-google-fonts/nunito';
+  PlayfairDisplay_700Bold,
+  PlayfairDisplay_900Black,
+  PlayfairDisplay_700Bold_Italic,
+} from '@expo-google-fonts/playfair-display';
+import {
+  SourceSerif4_300Light,
+  SourceSerif4_400Regular,
+  SourceSerif4_400Regular_Italic,
+} from '@expo-google-fonts/source-serif-4';
 import {
   DMSans_400Regular,
   DMSans_500Medium,
@@ -19,26 +23,24 @@ import { COLORS } from './src/theme';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Nunito_400Regular,
-    Nunito_500Medium,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
+    PlayfairDisplay_700Bold,
+    PlayfairDisplay_900Black,
+    PlayfairDisplay_700Bold_Italic,
+    SourceSerif4_300Light,
+    SourceSerif4_400Regular,
+    SourceSerif4_400Regular_Italic,
     DMSans_400Regular,
     DMSans_500Medium,
   });
 
   if (!fontsLoaded) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color={COLORS.amber} />
-      </View>
-    );
+    return <View style={styles.loading} />;
   }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppProvider>
-        <StatusBar style="dark" backgroundColor={COLORS.base} />
+        <StatusBar style="dark" backgroundColor={COLORS.cream} />
         <Navigation />
       </AppProvider>
     </GestureHandlerRootView>
@@ -48,8 +50,6 @@ export default function App() {
 const styles = StyleSheet.create({
   loading: {
     flex: 1,
-    backgroundColor: COLORS.base,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: COLORS.cream,
   },
 });

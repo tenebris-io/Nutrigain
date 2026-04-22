@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
-import { COLORS, FONTS, SIZES, SPACING, RADIUS, SHADOWS } from '../theme';
+import { COLORS, FONTS, SIZES, SPACING } from '../theme';
 import { DietaryChip, CrowdingDot, SectionHeader } from '../components/ui';
 import { useApp } from '../context/AppContext';
 import { isHallOpen, todayLabel } from '../utils/diningUtils';
 
 const FILTERS = ['vegan', 'gluten-free', 'vegetarian', 'high-protein', 'dairy-free'];
+
 const STATUS_LABEL = { green: 'Open', yellow: 'Busy', red: 'Crowded', closed: 'Closed' };
-const STATUS_COLOR = { green: COLORS.green, yellow: COLORS.yellow, red: COLORS.red, closed: COLORS.textSecondary };
-const STATUS_BG    = { green: COLORS.greenLight, yellow: COLORS.yellowLight, red: COLORS.redLight, closed: COLORS.inputBg };
+const STATUS_COLOR = { green: COLORS.green, yellow: COLORS.yellow, red: COLORS.red, closed: COLORS.inkFaint };
 
 export default function DiningScreen({ navigation }) {
   const { diningHalls, activeFilters, toggleFilter } = useApp();
@@ -22,25 +22,31 @@ export default function DiningScreen({ navigation }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
-      {/* ── Page header ──────────────────────────────────────────── */}
-      <View style={styles.pageHeader}>
-        <Text style={styles.title}>Dining</Text>
-        <Text style={styles.subtitle}>Real-time availability · {todayLabel()}</Text>
+      {/* ── Masthead ─────────────────────────────────────────────── */}
+      <View style={styles.masthead}>
+        <View style={styles.mastheadTop}>
+          <Text style={styles.mastheadDate}>{todayLabel()}</Text>
+          <Text style={styles.mastheadTag}>Campus Dining</Text>
+        </View>
+        <View style={styles.mastheadRule} />
+        <Text style={styles.mastheadTitle}>Dining</Text>
+        <Text style={styles.mastheadDeck}>Real-time availability & wait times.</Text>
+        <View style={styles.mastheadRuleBottom} />
       </View>
 
-      {/* ── Search bar ───────────────────────────────────────────── */}
+      {/* ── Search ───────────────────────────────────────────────── */}
       <View style={styles.searchWrap}>
         <Text style={styles.searchIcon}>⌕</Text>
         <TextInput
           style={styles.searchInput}
           placeholder="Search dining halls..."
-          placeholderTextColor={COLORS.textPlaceholder}
+          placeholderTextColor={COLORS.inkFaint}
           value={search}
           onChangeText={setSearch}
         />
       </View>
 
-      {/* ── Dietary filters ───────────────────────────────────────── */}
+      {/* ── Dietary filters ──────────────────────────────────────── */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterRow}>
         {FILTERS.map((f) => (
           <DietaryChip key={f} label={f} active={activeFilters.includes(f)} onPress={() => toggleFilter(f)} />
@@ -48,28 +54,27 @@ export default function DiningScreen({ navigation }) {
       </ScrollView>
 
       {/* ── Hall list ─────────────────────────────────────────────── */}
-      <SectionHeader title={`${filtered.length} locations`} />
+      <SectionHeader title={`${filtered.length} Locations`} />
       <View style={styles.hallList}>
         {filtered.map((hall, i) => {
-          const open = isHallOpen(hall.hours);
+          const open          = isHallOpen(hall.hours);
           const displayStatus = open === false ? 'closed' : hall.status;
           return (
             <TouchableOpacity
               key={hall.id}
               style={[styles.hallCard, i < filtered.length - 1 && styles.hallCardBorder]}
               onPress={() => navigation.navigate('DiningDetail', { hallId: hall.id })}
-              activeOpacity={0.7}
+              activeOpacity={0.75}
             >
               <View style={styles.hallTop}>
-                <View style={[styles.hallIconWrap, { backgroundColor: STATUS_BG[displayStatus] }]}>
-                  <Text style={styles.hallIcon}>🍽️</Text>
-                </View>
                 <View style={styles.hallMeta}>
-                  <Text style={styles.hallName}>{hall.name}</Text>
+                  <View style={styles.hallNameRow}>
+                    <CrowdingDot status={displayStatus === 'closed' ? null : displayStatus} />
+                    <Text style={styles.hallName}>{hall.name}</Text>
+                  </View>
                   <Text style={styles.hallLocation}>{hall.location} · {hall.distance}</Text>
                 </View>
-                <View style={[styles.statusPill, { backgroundColor: STATUS_BG[displayStatus] }]}>
-                  <CrowdingDot status={displayStatus === 'closed' ? null : displayStatus} />
+                <View style={styles.statusWrap}>
                   <Text style={[styles.statusText, { color: STATUS_COLOR[displayStatus] }]}>
                     {STATUS_LABEL[displayStatus]}
                   </Text>
@@ -78,10 +83,7 @@ export default function DiningScreen({ navigation }) {
 
               <View style={styles.capacityRow}>
                 <View style={styles.capacityBar}>
-                  <View style={[styles.capacityFill, {
-                    width: `${hall.capacity}%`,
-                    backgroundColor: STATUS_COLOR[hall.status],
-                  }]} />
+                  <View style={[styles.capacityFill, { width: `${hall.capacity}%`, backgroundColor: STATUS_COLOR[hall.status] }]} />
                 </View>
                 <Text style={styles.capacityText}>{hall.capacity}%</Text>
               </View>
@@ -89,21 +91,18 @@ export default function DiningScreen({ navigation }) {
               <View style={styles.detailRow}>
                 <Text style={styles.detailText}>⏱ {hall.waitTime}</Text>
                 <Text style={styles.detailText}>🕐 {hall.hours}</Text>
-                <Text style={styles.viewMenu}>View Menu ›</Text>
+                <Text style={styles.viewMenu}>View Menu →</Text>
               </View>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* Legend */}
       <View style={styles.legend}>
         {['green', 'yellow', 'red'].map((s) => (
           <View key={s} style={styles.legendItem}>
             <CrowdingDot status={s} />
-            <Text style={styles.legendText}>
-              {s === 'green' ? '< 30% full' : s === 'yellow' ? '30–70%' : '70%+ full'}
-            </Text>
+            <Text style={styles.legendText}>{s === 'green' ? '< 30% full' : s === 'yellow' ? '30–70%' : '70%+ full'}</Text>
           </View>
         ))}
       </View>
@@ -114,103 +113,64 @@ export default function DiningScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.base },
-  content: {},
+  container: { flex: 1, backgroundColor: COLORS.cream },
+  content:   {},
 
-  pageHeader: {
-    backgroundColor: COLORS.primaryDeep,
+  masthead: {
+    backgroundColor: COLORS.cream,
     paddingTop: SPACING.xxxl,
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl,
-    borderBottomLeftRadius: RADIUS.xl,
-    borderBottomRightRadius: RADIUS.xl,
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 3,
+    borderBottomColor: COLORS.ink,
   },
-  title: {
-    ...FONTS.bold,
-    fontSize: SIZES.xxxl,
-    color: COLORS.amberLight,
-    letterSpacing: -0.5,
-  },
-  subtitle: {
-    ...FONTS.regular,
-    fontSize: SIZES.sm,
-    color: 'rgba(255,255,255,0.65)',
-    marginTop: 2,
-  },
+  mastheadTop:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
+  mastheadDate:      { ...FONTS.medium, fontSize: 9, color: COLORS.inkLight, letterSpacing: 0.8 },
+  mastheadTag:       { ...FONTS.medium, fontSize: 9, color: COLORS.amberDark, letterSpacing: 0.8 },
+  mastheadRule:      { height: 1, backgroundColor: COLORS.rule, marginBottom: SPACING.sm },
+  mastheadTitle:     { fontFamily: 'PlayfairDisplay_900Black', fontSize: SIZES.xxxl + 8, color: COLORS.primaryDeep, letterSpacing: -1 },
+  mastheadDeck:      { fontFamily: 'SourceSerif4_300Light', fontSize: SIZES.sm, color: COLORS.inkMid, fontStyle: 'italic', marginTop: SPACING.xs, marginBottom: SPACING.md },
+  mastheadRuleBottom:{ height: 2, backgroundColor: COLORS.amber },
 
   searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.inputBg,
-    marginHorizontal: SPACING.lg,
-    marginTop: SPACING.lg,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    height: 46,
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderTopColor: 'rgba(163,170,155,0.55)',
-    borderLeftColor: 'rgba(163,170,155,0.55)',
-    borderBottomWidth: 1,
-    borderRightWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.65)',
-    borderRightColor: 'rgba(255,255,255,0.65)',
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+    marginHorizontal: SPACING.lg, marginTop: SPACING.lg,
+    borderBottomWidth: 1.5, borderBottomColor: COLORS.ink,
+    paddingBottom: SPACING.xs,
   },
-  searchIcon: { fontSize: 18, color: COLORS.textSecondary },
-  searchInput: {
-    flex: 1,
-    ...FONTS.regular,
-    fontSize: SIZES.md,
-    color: COLORS.textPrimary,
-  },
+  searchIcon:  { fontSize: 18, color: COLORS.inkLight },
+  searchInput: { flex: 1, fontFamily: 'SourceSerif4_400Regular', fontSize: SIZES.md, color: COLORS.ink, height: 36 },
 
   filterScroll: { marginTop: SPACING.md },
-  filterRow: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, alignItems: 'center' },
+  filterRow:    { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, alignItems: 'center' },
 
   hallList: {
-    backgroundColor: COLORS.base,
-    borderRadius: RADIUS.xl,
     marginHorizontal: SPACING.lg,
-    overflow: 'hidden',
-    ...SHADOWS.subtle,
+    backgroundColor: COLORS.white,
+    borderTopWidth: 3,
+    borderTopColor: COLORS.ink,
   },
-  hallCard: { padding: SPACING.lg },
-  hallCardBorder: { borderBottomWidth: 1, borderBottomColor: 'rgba(163,170,155,0.25)' },
+  hallCard:       { padding: SPACING.lg },
+  hallCardBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.rule },
 
-  hallTop: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
-  hallIconWrap: {
-    width: 46, height: 46, borderRadius: RADIUS.md,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  hallIcon:     { fontSize: 22 },
-  hallMeta:     { flex: 1 },
-  hallName:     { ...FONTS.bold, fontSize: SIZES.md, color: COLORS.textPrimary },
-  hallLocation: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary, marginTop: 1 },
-  statusPill: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
-    paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full,
-  },
-  statusText: { ...FONTS.bold, fontSize: SIZES.xs },
+  hallTop:     { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: SPACING.md },
+  hallMeta:    { flex: 1 },
+  hallNameRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginBottom: 3 },
+  hallName:    { fontFamily: 'PlayfairDisplay_700Bold', fontSize: SIZES.md, color: COLORS.ink, letterSpacing: -0.3 },
+  hallLocation:{ ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.inkLight },
+  statusWrap:  { paddingLeft: SPACING.md },
+  statusText:  { ...FONTS.medium, fontSize: SIZES.xs, letterSpacing: 0.6 },
 
-  capacityRow: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md,
-  },
-  capacityBar: {
-    flex: 1, height: 6, backgroundColor: COLORS.inputBg, borderRadius: RADIUS.full, overflow: 'hidden',
-    borderTopWidth: 0.5, borderLeftWidth: 0.5,
-    borderTopColor: 'rgba(163,170,155,0.50)', borderLeftColor: 'rgba(163,170,155,0.50)',
-  },
-  capacityFill: { height: '100%', borderRadius: RADIUS.full },
-  capacityText: { ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.textSecondary, width: 32, textAlign: 'right' },
+  capacityRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.sm },
+  capacityBar: { flex: 1, height: 3, backgroundColor: COLORS.creamDark },
+  capacityFill:{ height: '100%' },
+  capacityText:{ ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.inkLight, width: 32, textAlign: 'right' },
 
-  detailRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.lg },
-  detailText: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
-  viewMenu: {
-    marginLeft: 'auto', ...FONTS.semiBold, fontSize: SIZES.sm, color: COLORS.primary,
-  },
+  detailRow:   { flexDirection: 'row', alignItems: 'center', gap: SPACING.lg },
+  detailText:  { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.inkLight },
+  viewMenu:    { marginLeft: 'auto', ...FONTS.medium, fontSize: SIZES.xs, color: COLORS.primaryDeep, letterSpacing: 0.4, textDecorationLine: 'underline' },
 
-  legend: { flexDirection: 'row', gap: SPACING.xl, paddingHorizontal: SPACING.lg, marginTop: SPACING.lg },
+  legend:     { flexDirection: 'row', gap: SPACING.xl, paddingHorizontal: SPACING.lg, marginTop: SPACING.lg },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
-  legendText: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.textSecondary },
+  legendText: { ...FONTS.regular, fontSize: SIZES.xs, color: COLORS.inkLight },
 });
